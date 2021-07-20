@@ -1,0 +1,373 @@
+
+
+
+<!doctype html>
+<html class="no-js" lang="en">
+  
+<head><!-- begin head.html -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>
+    Service Level Distributed Data | Scylla Docs
+    </title>
+    <meta name="description" content="Scylla is an Apache Cassandra-compatible NoSQL data store that can handle 1 million transactions per second on a single server."/>
+
+    <link rel="icon" href="_static/img/favicon.ico" type="image/x-icon"/>
+    <link rel="canonical" href="https://docs.scylladb.com/">
+    <link rel="author" href="mailto:info@scylladb.com">
+    <link rel="stylesheet" href="_static/" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx_tabs/semantic-ui-2.4.1/segment.min.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx_tabs/semantic-ui-2.4.1/menu.min.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx_tabs/semantic-ui-2.4.1/tab.min.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx_tabs/tabs.css" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/css/doc/main.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css"/>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+
+    <script src="_static/js/vendor/modernizr.js"></script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-T8P2JP');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Marketo -->
+    <script type="text/javascript"> (function() { var didInit = false; function initMunchkin() { if(didInit === false) { didInit = true; Munchkin.init('791-QBF-350'); } } var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//munchkin.marketo.net/munchkin.js'; s.onreadystatechange = function() { if (this.readyState == 'complete' || this.readyState == 'loaded') { initMunchkin(); } }; s.onload = initMunchkin; document.getElementsByTagName('head')[0].appendChild(s); })(); </script>
+    <!-- End Marketo -->
+
+<!-- end head.html -->
+</head>
+
+<body>
+
+
+
+<header id="header" class="animated">
+    <div class="topbar_continer contain-to-grid clearfix">
+        <nav class="top-bar" id="top-bar" data-topbar role="navigation">
+            <ul class="title-area">
+                <li class="name">
+                    <div class="logo">
+                        <a href="https://docs.scylladb.com/"><img src="_static/img/logo-scylla-docs.svg" alt="" width="151"></a>
+                    </div>
+                </li>
+                <li class="toggle-topbar"><a href="#"><span class="icon-manu"></span></a></li>
+            </ul>
+            <section class="top-bar-section clearfix">
+                <ul class="right">
+                    
+                    <li>
+                        <a href="https://scylla.docs.scylladb.com">Scylla Developer Notes</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://university.scylladb.com/">Scylla University</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://www.scylladb.com/">ScyllaDB Home</a>
+                    </li>
+                    
+                    <li class="search_continer show-for-medium-up">	
+                        <ci-search></ci-search>	
+                    </li>	
+                </ul>
+            </section>
+        </nav>
+    </div>
+</header>
+<section id="content">
+    <div class="row">
+	
+	<div class="large-6 large-push-3 columns">
+
+        
+
+        <section id="service-level-distributed-data">
+<h1>Service Level Distributed Data<a class="headerlink" href="#service-level-distributed-data" title="Permalink to this headline">¶</a></h1>
+<p>There are two system tables that are used to facilitate the service level feature.</p>
+<section id="service-level-attachment-table">
+<h2>Service Level Attachment Table<a class="headerlink" href="#service-level-attachment-table" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-CREATE TABLE system_auth.role_attributes ( notranslate"><div class="highlight"><pre><span></span>    role text,
+    attribute_name text,
+    attribute_value text,
+    PRIMARY KEY (role, attribute_name))
+</pre></div>
+</div>
+<p>The table was created with generality in mind, but its purpose is to record
+information about roles. The table columns meaning are:
+<em>role</em> - the name of the role that the attribute belongs to.
+<em>attribute_name</em> - the name of the attribute for the role.
+<em>attribute_value</em> - the value of the specified attribute.</p>
+<p>For the service level, the relevant attribute name is <code class="docutils literal notranslate"><span class="pre">service_level</span></code>.
+So for example in order to find out which <code class="docutils literal notranslate"><span class="pre">service_level</span></code> is attached to role <code class="docutils literal notranslate"><span class="pre">r</span></code>
+one can run the following query:</p>
+<div class="highlight-SELECT * FROM system_auth.role_attributes WHERE role='r' and attribute_name='service_level' notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</section>
+<section id="service-level-configuration-table">
+<h2>Service Level Configuration Table<a class="headerlink" href="#service-level-configuration-table" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-CREATE TABLE system_distributed.service_levels ( notranslate"><div class="highlight"><pre><span></span>    service_level text PRIMARY KEY,
+    timeout duration,
+    workload_type text)
+</pre></div>
+</div>
+<p>The table is used to store and distribute the service levels configuration.
+The table column names meanings are:
+<em>service_level</em> - the name of the service level.
+<em>timeout</em> - timeout for operations performed by users under this service level
+<em>workload_type</em> - type of workload declared for this service level (unspecified, interactive or batch)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">select</span> <span class="o">*</span> <span class="kn">from</span> <span class="nn">system_distributed.service_levels</span> <span class="p">;</span>
+
+ <span class="n">service_level</span> <span class="o">|</span> <span class="n">timeout</span> <span class="o">|</span> <span class="n">workload_type</span>
+<span class="o">---------------+---------+---------------</span>
+            <span class="n">sl</span> <span class="o">|</span>   <span class="mi">500</span><span class="n">ms</span> <span class="o">|</span>   <span class="n">interactive</span>
+</pre></div>
+</div>
+</section>
+<section id="service-level-timeout">
+<h2>Service Level Timeout<a class="headerlink" href="#service-level-timeout" title="Permalink to this headline">¶</a></h2>
+<p>Service level timeout can be used to assign a default timeout value for all operations for a particular service level.</p>
+<p>Service level timeout takes precenence over default timeout values from scylla.yaml configuration
+file, but it can still be superseded by per-query timeouts (issuing a query with USING TIMEOUT directive).</p>
+<p>In order to set a timeout for a service level, create or alter it with proper parameters, e.g.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">create</span> <span class="n">service</span> <span class="n">level</span> <span class="n">sl</span> <span class="k">with</span> <span class="n">timeout</span> <span class="o">=</span> <span class="mi">50</span><span class="n">ms</span><span class="p">;</span>
+<span class="nb">list</span> <span class="nb">all</span> <span class="n">service</span> <span class="n">levels</span><span class="p">;</span>
+
+ <span class="n">service_level</span> <span class="o">|</span> <span class="n">timeout</span> 
+<span class="o">---------------+---------</span>
+            <span class="n">sl</span> <span class="o">|</span>    <span class="mi">50</span><span class="n">ms</span>
+</pre></div>
+</div>
+<p>Restoring the default timeout value (from scylla.yaml file) can be done by setting the service level timeout value to null:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">alter</span> <span class="n">service</span> <span class="n">level</span> <span class="n">sl</span> <span class="k">with</span> <span class="n">timeout</span> <span class="o">=</span> <span class="n">null</span><span class="p">;</span>
+<span class="nb">list</span> <span class="nb">all</span> <span class="n">service</span> <span class="n">levels</span><span class="p">;</span>
+
+ <span class="n">service_level</span> <span class="o">|</span> <span class="n">timeout</span> 
+<span class="o">---------------+---------</span>
+            <span class="n">sl</span> <span class="o">|</span>    <span class="n">null</span>
+</pre></div>
+</div>
+<section id="combining-service-level-timeouts-from-multiple-roles">
+<h3>Combining service level timeouts from multiple roles<a class="headerlink" href="#combining-service-level-timeouts-from-multiple-roles" title="Permalink to this headline">¶</a></h3>
+<p>A single role may be granted multiple other roles, which also means that more than one service level may be in effect
+for a particular user. In case of timeouts, multiple timeout values are combined by using a minimum of all effective
+timeouts. Example:</p>
+<p>role1: <code class="docutils literal notranslate"><span class="pre">timeout</span> <span class="pre">=</span> <span class="pre">1s</span></code>
+role2: <code class="docutils literal notranslate"><span class="pre">timeout</span> <span class="pre">=</span> <span class="pre">50ms</span></code>
+role3: <code class="docutils literal notranslate"><span class="pre">timeout</span> <span class="pre">=</span> <span class="pre">2s</span></code>
+role4: <code class="docutils literal notranslate"><span class="pre">timeout</span> <span class="pre">=</span> <span class="pre">10ms</span></code></p>
+<p>The granting hierarchy is as follows, with role1 inheriting from role2, which in turn
+inherits from role3 and role4:
+role4  role3
+\   /
+role2
+/
+role1</p>
+<p>With the following roles granted, here are the effective timeouts for the roles:</p>
+<p>role1: <code class="docutils literal notranslate"><span class="pre">timeout</span> <span class="pre">=</span> <span class="pre">10ms</span></code>
+role2: <code class="docutils literal notranslate"><span class="pre">timeout</span> <span class="pre">=</span> <span class="pre">10ms</span></code>
+role3: <code class="docutils literal notranslate"><span class="pre">timeout</span> <span class="pre">=</span> <span class="pre">2s</span></code>
+role4: <code class="docutils literal notranslate"><span class="pre">timeout</span> <span class="pre">=</span> <span class="pre">10ms</span></code></p>
+</section>
+</section>
+<section id="workload-types">
+<h2>Workload types<a class="headerlink" href="#workload-types" title="Permalink to this headline">¶</a></h2>
+<p>It’s possible to declare a workload type for a service level, currently out of three available values:</p>
+<ol class="simple">
+<li><p>unspecified - generic workload without any specific characteristics; default</p></li>
+<li><p>interactive - workload sensitive to latency, expected to have high/unbounded concurrency,
+with dynamic characteristics, OLTP;
+example: users clicking on a website and generating events with their clicks</p></li>
+<li><p>batch - workload for processing large amounts of data, not sensitive to latency, expected to have
+fixed concurrency, OLAP, ETL;
+example: processing billions of historical sales records to generate useful statistics</p></li>
+</ol>
+<p>Declaring a workload type provides more context for Scylla to decide how to handle the sessions.
+For instance, if a coordinator node receives requests with a rate higher than it can handle,
+it will make different decisions depending on the declared workload type:</p>
+<ul class="simple">
+<li><p>for batch workloads it makes sense to apply backpressure - the concurrency is assumed to be fixed,
+so delaying a reply will likely also reduce the rate at which new requests are sent;</p></li>
+<li><p>for interactive workloads, backpressure would only waste resources - delaying a reply does not
+decrease the rate of incoming requests, so it’s reasonable for the coordinator to start shedding
+surplus requests.</p></li>
+</ul>
+<p>If multiple workload types are applicable for a role, it makes sense if:</p>
+<ul class="simple">
+<li><p>all the applicable workload types are identical</p></li>
+<li><p>some of the service levels do not have any workload types specified</p></li>
+</ul>
+<p>Otherwise, e.g. if a role has multiple workload types declared,
+the conflicts are resolved as follows:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code> vs <code class="docutils literal notranslate"><span class="pre">unspecified</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">X</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">batch</span></code> vs <code class="docutils literal notranslate"><span class="pre">interactive</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">batch</span></code> - under the assumption that <code class="docutils literal notranslate"><span class="pre">batch</span></code> is safer, because it would not trigger load shedding as eagerly as <code class="docutils literal notranslate"><span class="pre">interactive</span></code></p></li>
+</ul>
+</section>
+</section>
+
+        </div>
+
+        <div id="sidebar" class="large-3 large-pull-6 columns"><div class="side-nav">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Scylla Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="alternator/alternator.html">Alternator: DynamoDB API in Scylla</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design-notes/index.html">Design Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/index.html">Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute/index.html">Contribute</a></li>
+</ul>
+
+</div>
+        </div>
+
+        <div class="large-3 columns">
+            
+                <div class="scylla-dropdown single-version">
+    <a href="#" data-options="align:bottom" data-dropdown="drop-versions" class="scylla-dropdown__button">
+        
+            master
+        
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-versions" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+            
+              <li><a href="service_levels.html">master</a></li>
+            
+    </ul>
+</div>
+            
+        </div>
+
+    </div>
+</section>
+
+<!-- newsleter modal -->
+
+<div id="newsletter_signup" class="reveal-modal tiny radius dark_modal" data-reveal aria-labelledby="modalTitle" aria-hidden="true" role="dialog">
+    <a class="close-reveal-modal" aria-label="Close">×</a>
+    <h2 id="modalTitle">Sign up for the Scylla newsletter</h2>
+    <div id="mc_embed_signup">
+        <form action="//cloudius-systems.us10.list-manage.com/subscribe/post?u=df8bb543c68230d5f7b4dcf78&amp;id=9a4589f144" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate="">
+            <div id="mc_embed_signup_scroll">
+
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-EMAIL">Email</label></div>
+                        <div class="small-9 columns"><input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-FNAME">First Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="FNAME" class="" id="mce-FNAME"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-LNAME">Last Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="LNAME" class="" id="mce-LNAME"></div>
+                    </div>
+                </div>
+                <div id="mce-responses" class="clear">
+                    <div class="response" id="mce-error-response" style="display:none"></div>
+                    <div class="response" id="mce-success-response" style="display:none"></div>
+                </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                <div style="position: absolute; left: -5000px;"><input type="text" name="b_df8bb543c68230d5f7b4dcf78_9a4589f144" tabindex="-1" value=""></div>
+                <div class="clear"><input type="submit" class="button" value="Sign up" name="subscribe" id="mc-embedded-subscribe"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- end newsleter modal -->
+
+
+
+<!-- footer.html -->
+<footer id="footer">
+    <div class="footer-top">
+        <a class="logo" href="https://www.scylladb.com"><img src="_static/img/logo-scylla-horizontal-RGB.svg" alt=""></a>
+        <div class="footer-links">
+            <a class="link" href="https://docs.scylladb.com">Docs</a>
+            <a class="link" href="https://www.scylladb.com/company/contact-us/">Contact Us</a>
+            <a class="link" href="https://www.scylladb.com/company/">About Us</a>
+          <div class="scylla-dropdown">
+    <a href="#" data-options="align:top" data-dropdown="drop-contribute" class="scylla-dropdown__button">
+        Contribute 
+        <i class="fa fa-github" aria-hidden="true"></i>
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-contribute" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+        <li><a href="https://github.com/scylladb/scylla/issues/new?title=Issue in page Service Level Distributed Data&&body=I%20would%20like%20to%20report%20an%20issue%20in%20page%20https://scylla.docs.scylladb.com/master/service_levels%0A%0A%23%23%23%20Problem%0A%0A%23%23%23%20%20Suggest%20a%20fix" target="_blank">Report a doc issue <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+        <li><a href="https://docs.scylladb.com/contribute/" target="_blank">Learn how to contribute <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+    </ul>
+</div>
+        </div>
+        <div class="footer-actions">
+            <a class="link-icon" href="https://github.com/ScyllaDB" target="_blank">
+                <span class="icon-github2"></span></a>
+            <a class="link-icon" href="https://twitter.com/ScyllaDB" target="_blank">
+                <span class="icon-twitter"></span></a>
+            <a class="link-icon" href="https://www.linkedin.com/company/scylladb"  target="_blank">
+                <span class="icon-linkedin2"></span></a>
+            <a class="link-icon" href="https://www.facebook.com/scylladb/" target="_blank">
+                <span class="icon-facebook"></span></a>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <div class="footer-info">
+            <div class="footer-copyright">
+                &#169; 2021, ScyllaDB. All rights reserved.
+            </div>
+            <div class="footer-last-updated">
+                Last updated on 20 July 2021.
+            </div>
+            <div class="footer-version">
+                Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+                &amp; <a href="https://sphinx-theme.scylladb.com">ScyllaDB Theme 0.1.25</a>
+            </div>
+        </div>
+        <div class="footer-links">
+        </div>
+    </div>
+</footer>
+<!-- end footer.html -->
+
+<!-- bodyscripts.html -->
+<!-- at the end of the BODY --> 
+<script src="_static/js/vendor/jquery.js"></script>
+<script src="_static/js/vendor/jquery.cookie.min.js"></script>
+<script src="_static/expertrec.js"></script>
+<script src="_static/js/foundation/foundation.js"></script>
+<script src="_static/js/foundation/foundation.topbar.js"></script>
+<script src="_static/js/foundation/foundation.dropdown.js"></script>
+<script src="_static/app.js"></script>
+<script>
+    $(document).foundation();
+</script>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T8P2JP"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+  <!-- end bodyscripts.html -->
+</body>
+</html>

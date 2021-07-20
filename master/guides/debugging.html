@@ -1,0 +1,1289 @@
+
+
+
+<!doctype html>
+<html class="no-js" lang="en">
+  
+<head><!-- begin head.html -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>
+    Debugging with GDB | Scylla Docs
+    </title>
+    <meta name="description" content="Scylla is an Apache Cassandra-compatible NoSQL data store that can handle 1 million transactions per second on a single server."/>
+
+    <link rel="icon" href="../_static/img/favicon.ico" type="image/x-icon"/>
+    <link rel="canonical" href="https://docs.scylladb.com/">
+    <link rel="author" href="mailto:info@scylladb.com">
+    <link rel="stylesheet" href="../_static/" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/segment.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/menu.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/tab.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/tabs.css" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/css/doc/main.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css"/>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+
+    <script src="../_static/js/vendor/modernizr.js"></script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-T8P2JP');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Marketo -->
+    <script type="text/javascript"> (function() { var didInit = false; function initMunchkin() { if(didInit === false) { didInit = true; Munchkin.init('791-QBF-350'); } } var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//munchkin.marketo.net/munchkin.js'; s.onreadystatechange = function() { if (this.readyState == 'complete' || this.readyState == 'loaded') { initMunchkin(); } }; s.onload = initMunchkin; document.getElementsByTagName('head')[0].appendChild(s); })(); </script>
+    <!-- End Marketo -->
+
+<!-- end head.html -->
+</head>
+
+<body>
+
+
+
+<header id="header" class="animated">
+    <div class="topbar_continer contain-to-grid clearfix">
+        <nav class="top-bar" id="top-bar" data-topbar role="navigation">
+            <ul class="title-area">
+                <li class="name">
+                    <div class="logo">
+                        <a href="https://docs.scylladb.com/"><img src="../_static/img/logo-scylla-docs.svg" alt="" width="151"></a>
+                    </div>
+                </li>
+                <li class="toggle-topbar"><a href="#"><span class="icon-manu"></span></a></li>
+            </ul>
+            <section class="top-bar-section clearfix">
+                <ul class="right">
+                    
+                    <li>
+                        <a href="https://scylla.docs.scylladb.com">Scylla Developer Notes</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://university.scylladb.com/">Scylla University</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://www.scylladb.com/">ScyllaDB Home</a>
+                    </li>
+                    
+                    <li class="search_continer show-for-medium-up">	
+                        <ci-search></ci-search>	
+                    </li>	
+                </ul>
+            </section>
+        </nav>
+    </div>
+</header>
+<section id="content">
+    <div class="row">
+	
+	<div class="large-6 large-push-3 columns">
+
+        
+
+        <section id="debugging-with-gdb">
+<h1>Debugging with GDB<a class="headerlink" href="#debugging-with-gdb" title="Permalink to this headline">¶</a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>GDB is a source level debugger for C, C++ and more languages. It allows
+inspecting the internal state of a program as it is running as well the
+post-mortem inspection of chrashed programs.</p>
+<p>You can attach GDB to a running process, run a process inside GDB or
+examine a coredump.</p>
+<section id="starting-gdb">
+<h3>Starting GDB<a class="headerlink" href="#starting-gdb" title="Permalink to this headline">¶</a></h3>
+<p>The two most common usages of GDB for scylla is running a process inside
+it (e.g. a unit test):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gdb</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">executable</span>
+</pre></div>
+</div>
+<p>You can specify command-line arguments that gdb will forward to the
+executable:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gdb</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">executable</span> <span class="o">--</span><span class="n">args</span> <span class="n">arg1</span> <span class="n">arg2</span> <span class="n">arg3</span>
+</pre></div>
+</div>
+<p>Another prevalent usage is to examine coredumps:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gdb</span> <span class="o">--</span><span class="n">core</span><span class="o">=/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">coredump</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">executable</span>
+</pre></div>
+</div>
+<p>You can also attach it to an already running process:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>gdb -p $pid
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">$pid</span></code> is the PID of the running process you wish to attach GDB
+to.</p>
+</section>
+<section id="using-gdb">
+<h3>Using GDB<a class="headerlink" href="#using-gdb" title="Permalink to this headline">¶</a></h3>
+<p>GDB has excellent online documentation that you can find
+<a class="reference external" href="https://sourceware.org/gdb/onlinedocs/gdb/index.html">here</a>.</p>
+<p>Some of the more important topics:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://sourceware.org/gdb/onlinedocs/gdb/Invocation.html#Invocation">Starting GDB</a></p></li>
+<li><p><a class="reference external" href="https://sourceware.org/gdb/onlinedocs/gdb/Set-Breaks.html#Set-Breaks">Setting breakpoints</a></p></li>
+<li><p><a class="reference external" href="https://sourceware.org/gdb/onlinedocs/gdb/Set-Catchpoints.html#Set-Catchpoints">Setting catchpoints</a></p></li>
+<li><p><a class="reference external" href="https://sourceware.org/gdb/onlinedocs/gdb/Continuing-and-Stepping.html#Continuing-and-Stepping">Stepping through the code</a></p></li>
+<li><p><a class="reference external" href="https://sourceware.org/gdb/onlinedocs/gdb/Stack.html#Stack">Examining the stack</a></p></li>
+<li><p><a class="reference external" href="https://sourceware.org/gdb/onlinedocs/gdb/Data.html#Data">Examining data</a></p></li>
+</ul>
+</section>
+</section>
+<section id="debugging-scylla-with-gdb">
+<h2>Debugging Scylla with GDB<a class="headerlink" href="#debugging-scylla-with-gdb" title="Permalink to this headline">¶</a></h2>
+<p>In general Scylla is quite hard to debug in GDB due to its asynchronous
+nature. You will soon find that backtraces always lead to the reactor’s
+event loop and stepping through the code will not work as you expect as
+soon as you leave or enter an asynchronous function.
+That said GDB is an indispensable tool in debugging coredumps and when
+used right can be of great help.</p>
+<p>Over the years we have collected a set of tools for helping with debugging
+scylla. These are collected in <a class="reference external" href="https://github.com/scylladb/scylla/blob/master/scylla-gdb.py"><code class="docutils literal notranslate"><span class="pre">scylla-gdb.py</span></code></a> and are in
+the form of <a class="reference external" href="https://sourceware.org/gdb/onlinedocs/gdb/Commands.html#Commands">commands</a>,
+<a class="reference external" href="https://sourceware.org/gdb/onlinedocs/gdb/Convenience-Funs.html#Convenience-Funs">conveninence functions</a>
+and <a class="reference external" href="https://sourceware.org/gdb/onlinedocs/gdb/Pretty-Printing.html#Pretty-Printing">pretty printers</a>.
+To load the file issue the following command (inside gdb):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">source</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">scylla</span><span class="o">-</span><span class="n">gdb</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>You should be now ready to use all of the tools contained therein. To
+list all available commands do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">help</span> <span class="n">scylla</span>
+</pre></div>
+</div>
+<p>To read the documentation of an individual command do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(gdb) help scylla $commandname
+</pre></div>
+</div>
+<p>Some commands have self explanatory names, some have documentation, and
+some have neither :( (contributions are welcome).</p>
+<p>To get the list of the available convenience functions do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">help</span> <span class="n">function</span>
+</pre></div>
+</div>
+<p>Note that this will list GDB internal functions as well as those added
+by <code class="docutils literal notranslate"><span class="pre">scylla-gdb.py</span></code>.
+Again, just like before, to see the documentation of an individual
+function do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(gdb) help function $functionname
+</pre></div>
+</div>
+<section id="tips-and-tricks">
+<h3>Tips and tricks<a class="headerlink" href="#tips-and-tricks" title="Permalink to this headline">¶</a></h3>
+<section id="tell-gdb-to-not-stop-on-signals-used-by-seastar">
+<h4>Tell GDB to not stop on signals used by seastar<a class="headerlink" href="#tell-gdb-to-not-stop-on-signals-used-by-seastar" title="Permalink to this headline">¶</a></h4>
+<p>When running scylla (or any seastar application for that matter) inside
+GDB it will get interrupted often due to catching some signals used by
+seastar internally. This makes debugging almost impossible. To avoid
+this, instruct GDB to not stop on these signals:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">handle</span> <span class="n">SIG34</span> <span class="n">SIG35</span> <span class="n">SIGUSR1</span> <span class="n">nostop</span> <span class="n">noprint</span> <span class="k">pass</span>
+</pre></div>
+</div>
+</section>
+<section id="avoid-some-symbol-parsing-related-crashes">
+<h4>Avoid (some) symbol parsing related crashes<a class="headerlink" href="#avoid-some-symbol-parsing-related-crashes" title="Permalink to this headline">¶</a></h4>
+<p>GDB is known to crash when parsing some of scylla’s symbols (especially
+those related to futures). Usually telling it to not print static
+members of classes and structs helps:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="nb">set</span> <span class="nb">print</span> <span class="n">static</span><span class="o">-</span><span class="n">members</span> <span class="n">no</span>
+</pre></div>
+</div>
+</section>
+<section id="enable-extended-python-diagnostics">
+<h4>Enable extended python diagnostics<a class="headerlink" href="#enable-extended-python-diagnostics" title="Permalink to this headline">¶</a></h4>
+<p>When using the facilities from <code class="docutils literal notranslate"><span class="pre">scylla-gdb.py</span></code> it is very useful to know
+the full stack of a failure in some of the provided tools, so that you
+can fix it or report it. To enable this run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="nb">set</span> <span class="n">python</span> <span class="nb">print</span><span class="o">-</span><span class="n">stack</span> <span class="n">full</span>
+</pre></div>
+</div>
+</section>
+<section id="helping-gdb-find-the-source-code-for-the-executable">
+<h4>Helping GDB find the source code for the executable<a class="headerlink" href="#helping-gdb-find-the-source-code-for-the-executable" title="Permalink to this headline">¶</a></h4>
+<p>Often you find yourself debugging an executable, whose internal source
+paths don’t match those where they can be found on your machine. There
+is an easy workaround for this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="nb">set</span> <span class="n">substitute</span><span class="o">-</span><span class="n">path</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="ow">in</span><span class="o">/</span><span class="n">executable</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">on</span><span class="o">/</span><span class="n">your</span><span class="o">/</span><span class="n">machine</span>
+</pre></div>
+</div>
+<p>Note that the pattern that you supply to <code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">substitute-path</span></code> just has
+to be a common prefix of the paths. Example: if the source location
+inside the executable to some file is <code class="docutils literal notranslate"><span class="pre">/opt/src/scylla/database.hh</span></code> and
+on your machine it is <code class="docutils literal notranslate"><span class="pre">/home/joe/work/scylla/database.hh</span></code>, you can make
+GDB find the sources on your machine via:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="nb">set</span> <span class="n">substitute</span><span class="o">-</span><span class="n">path</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">scylla</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">joe</span><span class="o">/</span><span class="n">work</span><span class="o">/</span><span class="n">scylla</span>
+</pre></div>
+</div>
+<p>This method might not work if the sources do not have a prefix, e.g.
+they are relative to the source tree root directory. In this case you can use the
+<code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">directories</span></code> command to set the search path of sources for gdb:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="nb">set</span> <span class="n">directories</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">scylla</span><span class="o">/</span><span class="n">source</span><span class="o">/</span><span class="n">tree</span>
+</pre></div>
+</div>
+<p>Multiple directories can be listed, separated with <code class="docutils literal notranslate"><span class="pre">:</span></code>.</p>
+</section>
+<section id="gdbinit">
+<h4>.gdbinit<a class="headerlink" href="#gdbinit" title="Permalink to this headline">¶</a></h4>
+<p>GDB supports writing arbitrary GDB commands in any file and sourcing it.
+One can use this to place commands that one would have to issue every
+time when debugging in a file, instead of typing them each time GDB is
+started.
+Conventionally this file is called <code class="docutils literal notranslate"><span class="pre">.gdbinit</span></code> and GDB in fact will look
+for it in you current directory, in your $HOME directory and some other
+places. You can always load it by hand if GDB refuses or fails to load it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">source</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">your</span><span class="o">/.</span><span class="n">gdbinit</span>
+</pre></div>
+</div>
+</section>
+<section id="tui">
+<h4>TUI<a class="headerlink" href="#tui" title="Permalink to this headline">¶</a></h4>
+<p>GDB has a terminal based GUI called
+<a class="reference external" href="https://sourceware.org/gdb/onlinedocs/gdb/TUI.html#TUI">TUI</a>.
+This is extremely useful when you wish to see the source code while you
+are debugging. The <code class="docutils literal notranslate"><span class="pre">TUI</span></code> mode can be activated by passing <code class="docutils literal notranslate"><span class="pre">-tui</span></code> to GDB
+on the command line, or any time by executing the <code class="docutils literal notranslate"><span class="pre">tui</span> <span class="pre">enable</span></code> to
+activate it and <code class="docutils literal notranslate"><span class="pre">tui</span> <span class="pre">disable</span></code> to deactivate it respectively.
+By default the source window has the focus in TUI mode, meaning that command
+completion, searching history and line editing doesn’t work, e.g. if you use
+the up and down keys, you will scroll the source file up and down respectively,
+instead of moving in the command history. To focus the command window, issue
+<code class="docutils literal notranslate"><span class="pre">focus</span> <span class="pre">cmd</span></code>. To move the focus to the source window again, issue <code class="docutils literal notranslate"><span class="pre">focus</span> <span class="pre">src</span></code>.</p>
+</section>
+<section id="thread-local-storage-tls-variables">
+<h4>Thread Local Storage (TLS) variables<a class="headerlink" href="#thread-local-storage-tls-variables" title="Permalink to this headline">¶</a></h4>
+<p>Thread local variables are saved in a special area of memory, at a negative
+offset from <code class="docutils literal notranslate"><span class="pre">$fs_base</span></code>. Let’s look at an example TLS variable, given the
+following C++ code from seastar:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">namespace</span> <span class="n">seastar</span><span class="p">::</span><span class="n">internal</span> <span class="p">{</span>
+
+<span class="n">inline</span>
+<span class="n">scheduling_group</span><span class="o">*</span>
+<span class="n">current_scheduling_group_ptr</span><span class="p">()</span> <span class="n">noexcept</span> <span class="p">{</span>
+    <span class="o">//</span> <span class="n">Slow</span> <span class="n">unless</span> <span class="n">constructor</span> <span class="ow">is</span> <span class="n">constexpr</span>
+    <span class="n">static</span> <span class="n">thread_local</span> <span class="n">scheduling_group</span> <span class="n">sg</span><span class="p">;</span>
+    <span class="k">return</span> <span class="o">&amp;</span><span class="n">sg</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Let’s have a look in GDB:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(gdb) p &amp;&#39;seastar::internal::current_scheduling_group_ptr()::sg&#39;
+$1 = (&lt;thread local variable, no debug info&gt; *) 0x7fc1f11e7c0c
+(gdb) p/x $fs_base
+$2 = 0x7fc1f11ff700
+(gdb) p/x 0x7fc1f11e7c0c - $fs_base
+$3 = 0xfffffffffffe850c
+(gdb) p/x -0xfffffffffffe850c
+$4 = 0x17af4
+</pre></div>
+</div>
+<p>The variable <code class="docutils literal notranslate"><span class="pre">sg</span></code> is located at offset <code class="docutils literal notranslate"><span class="pre">0x17af4</span></code> beneath <code class="docutils literal notranslate"><span class="pre">$fs_base</span></code>. We
+can also calculate the offset (and hence address) of a known TLS
+variable in memory as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$fs_offset = $tls_entry - $sizeof_TLS_header
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">$sizeof_TLS_header</span></code> can be obtained by listing the program headers of the binary:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ eu-readelf -l ./a.out
+  Type           Offset    VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  [...]
+  TLS            0x31ead40 0x00000000033ecd40 0x00000000033ecd40 0x000058 0x017bf0 R   0x40
+  [...]
+</pre></div>
+</div>
+<p>We are interested in the size of the TLS header, which is in the
+<code class="docutils literal notranslate"><span class="pre">MemSiz</span></code> column and is <code class="docutils literal notranslate"><span class="pre">0x017bf0</span></code> in this example. The value of the
+<code class="docutils literal notranslate"><span class="pre">$tls_entry</span></code> can be found in the process’ symbol table:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ eu-readelf -s ./a.out
+
+Symbol table [ 5] &#39;.dynsym&#39; contains 1288 entries:
+ 1 local symbol  String table: [ 9] &#39;.dynstr&#39;
+  Num:            Value   Size Type    Bind   Vis          Ndx Name
+	[...]
+ 1282: 000000000000010c      4 TLS     LOCAL  HIDDEN        23 _ZZN7seastar8internal28current_scheduling_group_ptrEvE2sg
+	[...]
+</pre></div>
+</div>
+<p>If we substitute these values in we can verify our theory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(gdb) set $tls_entry = 0x000000000000010c
+(gdb) set $sizeof_TLS_header = 0x017bf0
+(gdb) p/x $tls_entry - $sizeof_TLS_header
+$5 = 0xfffe851c
+(gdb) p/x -($tls_entry - $sizeof_TLS_header)
+$6 = 0x17ae4
+</pre></div>
+</div>
+<p>We can also identify a TLS variable based on its address. We know the
+value of <code class="docutils literal notranslate"><span class="pre">$sizeof_TLS_header</span></code> and we can easily calculate <code class="docutils literal notranslate"><span class="pre">$fs_offset</span></code>.
+To identify the variable we need to calculate its <code class="docutils literal notranslate"><span class="pre">$tls_entry</span></code> based on
+which we can find the matching entry in the symbol table. Remaining with
+the above example of the address being <code class="docutils literal notranslate"><span class="pre">0x7fc1f11e7c0c</span></code>, we can
+calculate this as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$tls_entry = $sizeof_TLS_header + $fs_offset
+</pre></div>
+</div>
+<p>Do note however that <code class="docutils literal notranslate"><span class="pre">$fs_offset</span></code> is negative so this is in effect a
+substituation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$tls_entry = 0x017bf0 - 0x17ae4
+</pre></div>
+</div>
+<p>This yields <code class="docutils literal notranslate"><span class="pre">0x10c</span></code> which is exactly the value of the <code class="docutils literal notranslate"><span class="pre">Value</span></code> column in
+the matching symbol table entry. This should work also if you don’t have
+the address to the start of the object. In this case you have to locate
+the entry in the symbol table, whose value range includes the
+calculated value. This can be made easier by sorting the symbol table by
+the <code class="docutils literal notranslate"><span class="pre">Value</span></code> column.</p>
+</section>
+<section id="optimized-out-variables">
+<h4>Optimized-out variables<a class="headerlink" href="#optimized-out-variables" title="Permalink to this headline">¶</a></h4>
+<p>In release builds one will find that a significant portion of variables and
+function parameters are optimized out. This is very annoying but often one can
+find a way around to inspect the desired variables.</p>
+<p>For non-local variables, there is a good chance that a few frames up one can
+find another reference that wasn’t optimized out. Or one can try to find another
+object, which is not optimized out, and which is also known to hold a reference
+to the variable.</p>
+<p>If the variable is local, one can try to look at the registers (<code class="docutils literal notranslate"><span class="pre">info</span> <span class="pre">registers</span></code>) and try to identify which one holds its value. This is relatively
+easy for pointers to objects as heap pointers are easily identifiable (they
+start with <code class="docutils literal notranslate"><span class="pre">0x6</span></code> and are composed of 12 digits, e.g.: <code class="docutils literal notranslate"><span class="pre">0x60f146e3fbc0</span></code>) and one
+can check the size of the object they point to with <code class="docutils literal notranslate"><span class="pre">scylla</span> <span class="pre">ptr</span></code>. If the
+pointed-to object is an instance of a class with virtual methods, the object can
+be easily identified by looking at its vtable pointer (<code class="docutils literal notranslate"><span class="pre">x/1a</span> <span class="pre">$ptr</span></code>).</p>
+</section>
+</section>
+<section id="debugging-coredumps">
+<h3>Debugging coredumps<a class="headerlink" href="#debugging-coredumps" title="Permalink to this headline">¶</a></h3>
+<p>Up until release 3.0 we used to build and package Scylla separately for each
+supported distribution. Starting with 3.1 we moved to relocatable binaries.
+These are built with a common <a class="reference external" href="https://github.com/scylladb/scylla/blob/master/tools/toolchain/README">frozen toolchain</a>
+and packages are bundled with all dependencies. This means that post 3.1 there
+is just one build across all supported distros and that the exact environment
+the binaries were built with is available in the form of a Docker image. This
+makes debugging cores generated from relocatable binaries much easier.
+As of now, all releases except 2019.1 ship via relocatable packages, so in this
+chapter we will focus on how to debug cores generated from relocatable binaries,
+with a subsection later explaining how to debug cores generated by 2019.1
+binaries.</p>
+<section id="relocatable-binaries">
+<h4>Relocatable binaries<a class="headerlink" href="#relocatable-binaries" title="Permalink to this headline">¶</a></h4>
+<p>Cores produced by relocatable binaries can be simply opened in the
+<a class="reference external" href="https://github.com/scylladb/scylla/blob/master/tools/toolchain/README">dbuild</a> container they were built with. To do
+that, two things (apart from the core itself of course) are needed:</p>
+<ol class="simple">
+<li><p>The exact frozen toolchain (dbuild container).</p></li>
+<li><p>The exact relocatable package the binary was part of.</p></li>
+</ol>
+<section id="obtaining-the-frozen-toolchain">
+<h5>Obtaining the frozen toolchain<a class="headerlink" href="#obtaining-the-frozen-toolchain" title="Permalink to this headline">¶</a></h5>
+<p>The frozen toolchain is obtained based on the commit id of the version of the
+scylla executable the core was produced with. The exact commit hash can be
+obtained by running:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ scylla --version
+666.development-0.20200630.28c3d4f8e
+</pre></div>
+</div>
+<p>The version can be divided into 4 parts:</p>
+<ul class="simple">
+<li><p>The version identifier, in this case: 666; in case of a release this
+will be something like 4.2.</p></li>
+<li><p>The build identifier, in this case: development-0.</p></li>
+<li><p>The date, in this case: 20200630.</p></li>
+<li><p>The commit hash, in this case: 28c3d4f8e.</p></li>
+</ul>
+<p>Based on the latter, you can obtain the right frozen toolchain:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cd /path/to/scylla
+$ git checkout $commit_hash
+</pre></div>
+</div>
+</section>
+<section id="obtaining-the-relocatable-package">
+<h5>Obtaining the relocatable-package<a class="headerlink" href="#obtaining-the-relocatable-package" title="Permalink to this headline">¶</a></h5>
+<p>Once we have the right toolchain, we have to obtain the relocatable package.
+This is obtained based on the build-id, which can be obtained from the coredump
+like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ eu-unstrip -n --core $corefile
+</pre></div>
+</div>
+<p>Or from the executable like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ eu-unstrip -n --exec $executable
+</pre></div>
+</div>
+<p>With the build-id you can find the relocatable using the
+<a class="reference external" href="https://github.com/scylladb/scylla-pkg/#looking-for-a-build">scylla-pkg.git/scripts/scylla-s3-reloc (private repo)</a>
+script.</p>
+</section>
+<section id="loading-the-core">
+<h5>Loading the core<a class="headerlink" href="#loading-the-core" title="Permalink to this headline">¶</a></h5>
+<p>Move the coredump and the unpackaged relocatable package into some dir
+<code class="docutils literal notranslate"><span class="pre">$dir</span></code> on your system, then:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>(host)$ cd /path/to/scylla # with the right commit checked out
+(host)$ ./tools/toolchain/dbuild -it -v $dir:/workdir:z -- bash -l
+(dbuild)$ cd /workdir
+(dbuild)$ cd unpackaged-relocatable-package &amp;&amp; ./install.sh &amp;&amp; cd ..
+(dbuild)$ gdb --core=$corefile /opt/scylladb/libexec/scylla
+</pre></div>
+</div>
+<p>You might need to add</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span><span class="n">ex</span> <span class="s1">&#39;set auto-load safe-path /opt/scylladb/libreloc&#39;</span>
+</pre></div>
+</div>
+<p>to the command line, see <a class="reference external" href="#no-thread-debugging">No thread debugging</a>.</p>
+</section>
+</section>
+<section id="non-relocatable-binaries-2019-1">
+<h4>Non-relocatable binaries (2019.1)<a class="headerlink" href="#non-relocatable-binaries-2019-1" title="Permalink to this headline">¶</a></h4>
+<p>The first step in opening any core is (after obtaining the core itself)
+obtaining the <em>exact</em> executable and library versions it was produced with. This
+is very important, it is not enough to get a binary with the same version, or to
+build one with the same commit, the binaries and libraries <em>have to be the very
+same ones the core was produced with</em>. This is because neither distros nor use
+use <a class="reference external" href="https://en.wikipedia.org/wiki/Reproducible_builds">reproducible builds</a>,
+which means that each build will produce a slightly different binary, which
+might be enough to make debugging hard or downright impossible.
+A foolproof method to match cores to their matching executables and libraries
+is the <em>build-id</em>. This is automatically assigned to each binary when it is
+built and it uniquely identifies it.</p>
+<section id="collecting-libraries">
+<h5>Collecting libraries<a class="headerlink" href="#collecting-libraries" title="Permalink to this headline">¶</a></h5>
+<p>As stated above, just installing Scylla on another machine with the same OS
+version is not enough to obtain the correct environment to load the core.
+Packages might have newer versions, or the customer might be using different
+packages. It is important that we obtain the exact packages installed on the
+system where the core was produced on.</p>
+<p>A method that should work regardless of the used distro is zipping all libs:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">eu</span><span class="o">-</span><span class="n">unstrip</span> <span class="o">-</span><span class="n">n</span> <span class="o">--</span><span class="n">core</span> <span class="n">corefile</span> <span class="o">|</span> <span class="n">awk</span> <span class="s1">&#39;{print $3}&#39;</span> <span class="o">|</span> <span class="n">grep</span> <span class="o">-</span><span class="n">v</span> <span class="s1">&#39;[-.]$&#39;</span> <span class="o">|</span> <span class="nb">zip</span> <span class="n">scylla</span><span class="o">-</span><span class="n">libs</span> <span class="o">-@</span>
+</pre></div>
+</div>
+<p>This might however produce a rather large zip or zip might not be available on
+the node and it can’t be installed (yes really). So below we are going to
+look at methods that doesn’t involve copying a huge zip from the node, nor
+installing any new software.</p>
+</section>
+<section id="centos-redhat">
+<h5>CentOS/Redhat<a class="headerlink" href="#centos-redhat" title="Permalink to this headline">¶</a></h5>
+<p>CentOS and Redhat has means to obtain the binaries given a certain build-id.
+TODO: document how that works.</p>
+</section>
+<section id="ubuntu-debian">
+<h5>Ubuntu/Debian<a class="headerlink" href="#ubuntu-debian" title="Permalink to this headline">¶</a></h5>
+<p>Run the following script to collect the version of each library used by Scylla:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="k">function</span> file_uri<span class="o">()</span> <span class="o">{</span>
+    dpkg -S <span class="nv">$1</span> <span class="p">|</span> cut -d<span class="s2">&quot; &quot;</span> -f1 <span class="p">|</span> cut -d: -f1,2 <span class="p">|</span> xargs apt-get download --print-uris
+<span class="o">}</span>
+
+<span class="k">for</span> lib in <span class="k">$(</span>ldd <span class="sb">`</span>which scylla<span class="sb">`</span> <span class="p">|</span> cut -d<span class="s1">&#39;(&#39;</span> -f1 <span class="p">|</span> awk <span class="s1">&#39;{print $3}&#39;</span><span class="k">)</span><span class="p">;</span> <span class="k">do</span>
+    <span class="k">if</span> <span class="o">[</span> -n <span class="s2">&quot;</span><span class="nv">$lib</span><span class="s2">&quot;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+        <span class="nb">echo</span> <span class="s2">&quot;</span><span class="si">${</span><span class="nv">lib</span><span class="si">}</span><span class="s2">: </span><span class="k">$(</span>file_uri <span class="nv">$lib</span><span class="k">)</span><span class="s2">&quot;</span>
+    <span class="k">fi</span>
+<span class="k">done</span>
+</pre></div>
+</div>
+<p>This will produce an output like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">scylladb</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">libstdc</span><span class="o">++.</span><span class="n">so</span><span class="o">.</span><span class="mi">6</span><span class="p">:</span> <span class="s1">&#39;http://some.mirror.example/mirrors/scylla/versioned/2019100201/ubuntu/pool/main/s/scylla-gcc73/scylla-gcc73-libstdc++6_7.3.0-3ubuntu2~xenialppa1_amd64.deb&#39;</span> <span class="n">scylla</span><span class="o">-</span><span class="n">gcc73</span><span class="o">-</span><span class="n">libstdc</span><span class="o">++</span><span class="mi">6</span><span class="n">_7</span><span class="o">.</span><span class="mf">3.0</span><span class="o">-</span><span class="mi">3</span><span class="n">ubuntu2</span><span class="o">~</span><span class="n">xenialppa1_amd64</span><span class="o">.</span><span class="n">deb</span> <span class="mi">368128</span> <span class="n">SHA256</span><span class="p">:</span><span class="mi">7</span><span class="n">aa085e85c2a6bbd5b1517985e84cf280b74839d7ccb313f823f201ad162fccc</span>
+<span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">libcrypto</span><span class="o">++.</span><span class="n">so</span><span class="o">.</span><span class="mi">9</span><span class="p">:</span> <span class="s1">&#39;http://some.mirror.example/mirrors/debian/versioned/2018060600/ubuntu/pool/universe/libc/libcrypto++/libcrypto++9v5_5.6.1-9_amd64.deb&#39;</span> <span class="n">libcrypto</span><span class="o">++</span><span class="mi">9</span><span class="n">v5_5</span><span class="o">.</span><span class="mf">6.1</span><span class="o">-</span><span class="mi">9</span><span class="n">_amd64</span><span class="o">.</span><span class="n">deb</span> <span class="mi">885184</span> <span class="n">SHA256</span><span class="p">:</span><span class="mi">888</span><span class="n">ce5da554200dac297d97b376d27607515689a79df944295e0e43cd0d94d31</span>
+<span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">x86_64</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">gnu</span><span class="o">/</span><span class="n">librt</span><span class="o">.</span><span class="n">so</span><span class="o">.</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;http://some.mirror.example/mirrors/debian/versioned/2018060600/ubuntu/pool/main/g/glibc/libc6_2.23-0ubuntu10_amd64.deb&#39;</span> <span class="n">libc6_2</span><span class="o">.</span><span class="mi">23</span><span class="o">-</span><span class="mi">0</span><span class="n">ubuntu10_amd64</span><span class="o">.</span><span class="n">deb</span> <span class="mi">2580230</span> <span class="n">SHA256</span><span class="p">:</span><span class="n">bd05c3487325a4386dee6abb02ad904e1f2d8d3d0adc0df8e8f29168fbe2b5bb</span>
+</pre></div>
+</div>
+<p>Usually the URLs are accessible and the packages can be simply downloaded. In
+some case however they are on some internal mirror that is only accessible from
+within the internal network of the cluster. In this case one has to obtain the
+exact name and version of the packages then download it themselves with
+<code class="docutils literal notranslate"><span class="pre">apt-get</span></code>. Given the file with the output of the above script containing the
+package versions (<code class="docutils literal notranslate"><span class="pre">packages.txt</span></code> from now on), you can use the below script to
+parse the package name and version from it and download the appropriate <code class="docutils literal notranslate"><span class="pre">.deb</span></code>
+package files:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="k">while</span> <span class="nb">read</span> l
+<span class="k">do</span>
+    <span class="nv">deb</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> <span class="nv">$l</span> <span class="p">|</span> cut -f3 -d<span class="s1">&#39; &#39;</span><span class="k">)</span>
+    <span class="nv">pkg_name</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> <span class="nv">$deb</span> <span class="p">|</span> cut -f1 -d_<span class="k">)</span>
+    <span class="nv">pkg_version</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> <span class="nv">$deb</span> <span class="p">|</span> cut -f2 -d_<span class="k">)</span>
+    apt-get download <span class="si">${</span><span class="nv">pkg_name</span><span class="si">}</span><span class="o">=</span><span class="si">${</span><span class="nv">pkg_version</span><span class="si">}</span>
+<span class="k">done</span> &lt; /path/to/packages.txt
+</pre></div>
+</div>
+<p>Note that in some cases the names of packages or their versions in
+<code class="docutils literal notranslate"><span class="pre">packages.txt</span></code> will contain <a class="reference external" href="https://en.wikipedia.org/wiki/Percent-encoding">encoded
+characters</a>, like <code class="docutils literal notranslate"><span class="pre">%3a</span></code>. This
+will make <code class="docutils literal notranslate"><span class="pre">apt-get</span></code> fail to download the package. Be sure to decode any of these
+before attempting the run the downloading script.
+Also in some cases the exact version will not be available anymore. In this case
+try to locate the closest version to the desired one and download that one. You
+can use <code class="docutils literal notranslate"><span class="pre">apt-cache</span></code> to query available versions:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apt</span><span class="o">-</span><span class="n">cache</span> <span class="n">show</span> <span class="n">package</span><span class="o">-</span><span class="n">name</span> <span class="o">|</span> <span class="n">grep</span> <span class="n">Version</span><span class="p">:</span>
+</pre></div>
+</div>
+</section>
+<section id="opening-the-core-on-the-same-os">
+<h5>Opening the core on the same OS<a class="headerlink" href="#opening-the-core-on-the-same-os" title="Permalink to this headline">¶</a></h5>
+<p>The packages obtained can be installed on the system, and the core can be simply
+opened with GDB, which should find the libraries without issues. One thing to
+note is that usually these distros will have older GDB:s available, which might
+have problems handling Scylla symbols. For this reason we also build and package
+GDB for all supported distros. This can be installed via the <code class="docutils literal notranslate"><span class="pre">scylla-gdb</span></code>
+package, after adding the Scylla repositories. Run GDB via
+<code class="docutils literal notranslate"><span class="pre">/opt/scylladb/bin/gdb</span></code>.</p>
+</section>
+<section id="opening-the-core-on-another-os">
+<h5>Opening the core on another OS<a class="headerlink" href="#opening-the-core-on-another-os" title="Permalink to this headline">¶</a></h5>
+<p>If you don’t feel like struggling to get recent enough tools on a potentially
+very old distro, a viable alternative is to just debug on your development box.
+The first step is unpacking (not installing!) all the packages. This can be
+easily done with a docker image, e.g. for ubuntu:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ docker run -it --privileged -v .:/workspace ubuntu:16.04 bash -l
+<span class="o">(</span>docker<span class="o">)</span> $ <span class="k">for</span> pkg in <span class="k">$(</span>ls *.deb<span class="k">)</span><span class="p">;</span> <span class="k">do</span> dpkg -x <span class="nv">$pkg</span> .<span class="p">;</span> <span class="k">done</span>
+</pre></div>
+</div>
+<p>After running the above snippet the current directory will contain a linux <code class="docutils literal notranslate"><span class="pre">/</span></code>
+directory structure. To load the core in GDB:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ gdb -q
+(gdb) set sysroot .
+(gdb) set solib-search-path ./lib64:./lib/x86_64-linux-gnu
+(gdb) core /path/to/core
+(gdb) file ./usr/bin/scylla
+(gdb) set solib-search-path ./lib64:./lib/x86_64-linux-gnu
+</pre></div>
+</div>
+<p>Note that although relative paths should work for <code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">sysroot</span></code> and <code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">solib-search-path</span></code>, sometimes I could only get this working with absolute path.
+If opening the core wasn’t successful (thread debugging doesn’t work) try using
+absolute paths. Also note that issuing the <code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">solib-search-path</span></code> command has
+to be done once before and once after the <code class="docutils literal notranslate"><span class="pre">file</span></code> command. Don’t ask me why.
+Another thing to keep in mind is that <code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">solib-search-path</span></code> has to contain all
+directories that contain libraries. In the case of ubuntu:16.04 this is <code class="docutils literal notranslate"><span class="pre">/lib64</span></code>
+and <code class="docutils literal notranslate"><span class="pre">/lib/x86_64-linux-gnu</span></code>. Other distros could have less or more such paths.
+Multiple paths can be added separated with <code class="docutils literal notranslate"><span class="pre">:</span></code>.</p>
+<p>You can check that GDB correctly loaded the libraries by using <code class="docutils literal notranslate"><span class="pre">info</span> <span class="pre">sharedlibrary</span></code> and ensuring all libraries are loaded from the directory where
+the packages were extracted to, and not from the host.</p>
+</section>
+</section>
+</section>
+<section id="troubleshooting">
+<h3>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h3>
+<section id="namespace-issues">
+<h4>Namespace issues<a class="headerlink" href="#namespace-issues" title="Permalink to this headline">¶</a></h4>
+<p>GDB complaints that it can’t find <code class="docutils literal notranslate"><span class="pre">namespace</span> <span class="pre">seastar</span></code> or some other Scylla
+or Seastar symbol that you know exists. This usually happens when GDB is in
+the wrong context i.e. a frame is selected which is not in the Scylla executable
+but in some other library. A typical situation is opening a coredump and
+attempting to access Scylla symbols when the initial frame is in libc.
+Move up the stack, or select a frame which is a Scylla or Seastar function to
+fix.</p>
+</section>
+<section id="no-thread-debugging">
+<h4>No thread debugging<a class="headerlink" href="#no-thread-debugging" title="Permalink to this headline">¶</a></h4>
+<p>Unable to access thread-local variables. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">p</span> <span class="n">seastar</span><span class="p">::</span><span class="n">local_engine</span>
+<span class="n">Cannot</span> <span class="n">find</span> <span class="n">thread</span><span class="o">-</span><span class="n">local</span> <span class="n">storage</span> <span class="k">for</span> <span class="n">LWP</span> <span class="mi">22604</span><span class="p">,</span> <span class="n">executable</span> <span class="n">file</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">debug</span><span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">scylla</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+<span class="n">Cannot</span> <span class="n">find</span> <span class="n">thread</span><span class="o">-</span><span class="n">local</span> <span class="n">variables</span> <span class="n">on</span> <span class="n">this</span> <span class="n">target</span>
+</pre></div>
+</div>
+<p>The first step in finding out why thread debugging doesn’t work is enabling
+additional information about why thread debugging is not working:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="nb">set</span> <span class="n">debug</span> <span class="n">libthread</span><span class="o">-</span><span class="n">db</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>This has to be done right after starting GDB, <em>before</em> the core and the
+executable are loaded. You can do this by adding
+<code class="docutils literal notranslate"><span class="pre">-iex</span> <span class="pre">&quot;set</span> <span class="pre">debug</span> <span class="pre">libthread-db</span> <span class="pre">1&quot;</span></code> to your gdb command line.</p>
+<p>The usual cause is that GDB failed to find some libraries or that the library
+versions of those libraries GDB loaded don’t match those the core was generated
+with.</p>
+<p>Of special note is the <code class="docutils literal notranslate"><span class="pre">libthread_db.so</span></code> library, which is crucial for
+thread debugging to work. Common causes of failing to find or load this library
+are discussed below.</p>
+<section id="loading-denied-by-auto-load-safe-path">
+<h5>Loading denied by auto-load safe-path<a class="headerlink" href="#loading-denied-by-auto-load-safe-path" title="Permalink to this headline">¶</a></h5>
+<p>You might see a message like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>warning: File &quot;/opt/scylladb/libreloc/libthread_db.so.1&quot; auto-loading has been declined by your `auto-load safe-path&#39; set to &quot;$debugdir:$datadir/auto-load&quot;
+thread_db_load_search returning 0
+</pre></div>
+</div>
+<p>To declare the directory this library is found at as safe to load from, do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">auto</span><span class="o">-</span><span class="n">load</span> <span class="n">safe</span><span class="o">-</span><span class="n">path</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">scylladb</span><span class="o">/</span><span class="n">libreloc</span>
+</pre></div>
+</div>
+<p>Use the path that is appropriate for your setup. Alternatively you can use <code class="docutils literal notranslate"><span class="pre">/</span></code>
+as the path to declare your entire file-system as safe to load stuff from.
+Note that <code class="docutils literal notranslate"><span class="pre">libthread_db.so</span></code> is packaged together with <code class="docutils literal notranslate"><span class="pre">libc</span></code>. So if you have the
+build-id appropriate <code class="docutils literal notranslate"><span class="pre">libc</span></code> package, you can be sure you have the correct
+<code class="docutils literal notranslate"><span class="pre">libthread_db.so</span></code> too.</p>
+</section>
+<section id="missing-debug-symbols-for-glibc">
+<h5>Missing debug symbols for glibc<a class="headerlink" href="#missing-debug-symbols-for-glibc" title="Permalink to this headline">¶</a></h5>
+<p>If you see a message like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">warning</span><span class="p">:</span> <span class="n">Expected</span> <span class="n">absolute</span> <span class="n">pathname</span> <span class="k">for</span> <span class="n">libpthread</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">inferior</span><span class="p">,</span> <span class="n">but</span> <span class="n">got</span> <span class="o">.</span><span class="n">gnu_debugdata</span> <span class="k">for</span> <span class="o">/</span><span class="n">lib64</span><span class="o">/</span><span class="n">libpthread</span><span class="o">.</span><span class="n">so</span><span class="o">.</span><span class="mf">0.</span>
+<span class="n">Trying</span> <span class="n">host</span> <span class="n">libthread_db</span> <span class="n">library</span><span class="p">:</span> <span class="o">/</span><span class="n">lib64</span><span class="o">/</span><span class="n">libthread_db</span><span class="o">.</span><span class="n">so</span><span class="o">.</span><span class="mf">1.</span>
+<span class="n">td_ta_new</span> <span class="n">failed</span><span class="p">:</span> <span class="n">application</span> <span class="ow">not</span> <span class="n">linked</span> <span class="k">with</span> <span class="n">libthread</span>
+<span class="n">thread_db_load_search</span> <span class="n">returning</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<p>Installing debug symbols for glibc might solve this. This issue was seen on
+Fedora 34, for more details see the
+<a class="reference external" href="https://bugzilla.redhat.com/show_bug.cgi?id=1960867">bug report</a>.
+Debug symbols can be installed with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">dnf</span> <span class="n">debuginfo</span><span class="o">-</span><span class="n">install</span> <span class="n">glibc</span><span class="o">-</span><span class="mf">2.32</span><span class="o">-</span><span class="mf">6.</span><span class="n">fc33</span><span class="o">.</span><span class="n">x86_64</span>
+</pre></div>
+</div>
+<p>Adjust for the exact version you have installed.</p>
+</section>
+<section id="missing-critical-shared-libraries">
+<h5>Missing critical shared libraries<a class="headerlink" href="#missing-critical-shared-libraries" title="Permalink to this headline">¶</a></h5>
+<p>If you ensured <code class="docutils literal notranslate"><span class="pre">libthread_db.so</span></code> is present and is successfully loaded by GDB
+but thread debugging still doesn’t work, inspect the other libraries loaded by
+GDB:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">info</span> <span class="n">sharedlibrary</span>
+</pre></div>
+</div>
+<p>The listing will contain the path of the loaded libraries. If a library wasn’t
+found by GDB that will also be visible in the listing. You can then use the
+<code class="docutils literal notranslate"><span class="pre">file</span></code> utility to obtain the build-id of the libraries:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">file</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">libsomething</span><span class="o">.</span><span class="n">so</span>
+</pre></div>
+</div>
+<p>This build-id must match the one obtained from the core. The library build-ids
+from the core can be obtained with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">eu</span><span class="o">-</span><span class="n">unstrip</span> <span class="o">-</span><span class="n">n</span> <span class="o">--</span><span class="n">core</span><span class="o">=/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">core</span>
+</pre></div>
+</div>
+<p>In general you can get away some non-core libraries missing or having the wrong
+version, but the core libraries like <code class="docutils literal notranslate"><span class="pre">libc.so</span></code>, <code class="docutils literal notranslate"><span class="pre">libgcc_s.so</span></code>, <code class="docutils literal notranslate"><span class="pre">librt.so</span></code> and
+<code class="docutils literal notranslate"><span class="pre">ld.so</span></code> (often called something like <code class="docutils literal notranslate"><span class="pre">ld-linux-x86-64.so.2</span></code>) etc. must have the
+correct version. Best to ensure all libraries are correct to minimize the chance
+of something not working. Also, make sure the build-id of the executable matches
+that the core was generated with. Again, you can use <code class="docutils literal notranslate"><span class="pre">file</span></code> to obtain the
+build-id of the executable, then compare it with the build-id obtained from the
+<code class="docutils literal notranslate"><span class="pre">eu-unstrip</span></code> listing.
+For more information on how to obtain the correct version of libraries and how
+to override the path GDB loads them from, see <a class="reference external" href="#collecting-libraries">Collecting libraries</a>
+and <a class="reference external" href="#opening-the-core-on-another-os">Opening the core on another OS</a>.</p>
+</section>
+</section>
+<section id="gdb-crashes-when-priting-the-backtrace-or-some-variable">
+<h4>GDB crashes when priting the backtrace or some variable<a class="headerlink" href="#gdb-crashes-when-priting-the-backtrace-or-some-variable" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference external" href="#avoid-some-symbol-parsing-related-crashes">Avoid (some) symbol parsing related crashes</a>.</p>
+<p>GDB has trouble with frames inlined into the outermost frame in a seastar thread,
+or any green threads in general – where the outermost frame is annotated with
+<code class="docutils literal notranslate"><span class="pre">.cfi_undefined</span> <span class="pre">rip</span></code>. See
+<a class="reference external" href="https://sourceware.org/bugzilla/show_bug.cgi?id=26387">GDB#26387</a>.
+To work around this, pass a limit to <code class="docutils literal notranslate"><span class="pre">bt</span></code>, such that it excludes the problematic
+frame. E.g. if <code class="docutils literal notranslate"><span class="pre">bt</span></code> prints 10 frames before GDB crashing, use <code class="docutils literal notranslate"><span class="pre">bt</span> <span class="pre">9</span></code> to avoid the
+crash.</p>
+</section>
+<section id="gdb-keeps-stopping-on-some-signals">
+<h4>GDB keeps stopping on some signals<a class="headerlink" href="#gdb-keeps-stopping-on-some-signals" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference external" href="#tell-gdb-to-not-stop-on-signals-used-by-seastar">Tell GDB to not stop on signals used by seastar</a>.</p>
+</section>
+</section>
+<section id="debugging-guides">
+<h3>Debugging guides<a class="headerlink" href="#debugging-guides" title="Permalink to this headline">¶</a></h3>
+<p>Guides focusing on different aspects of debugging Scylla. These guides
+assume a release build of Scylla.</p>
+<section id="the-seastar-memory-allocator">
+<h4>The seastar memory allocator<a class="headerlink" href="#the-seastar-memory-allocator" title="Permalink to this headline">¶</a></h4>
+<p>Seastar has its own memory allocator optimized for Seastar’s
+thread-per-core architecture. Memory, just like CPU, is sharded among
+threads, meaning that each shard has its equally-sized exclusive memory area.</p>
+<p>The seastar allocator operates on three levels:</p>
+<ul class="simple">
+<li><p>pages (4KB)</p></li>
+<li><p>spans of pages (2^N pages, N ∈  [0, 31])</p></li>
+<li><p>objects managed by small pools</p></li>
+</ul>
+<p>Small allocations (&lt;= 16KB) are served by small memory pools. There is
+exactly one pool per supported size, and there is a limited number of
+sizes available between 1B (8B in practice) and 16KB. Allocations are served
+by the pool with the closest, but larger than equal size to the requested
+allocation, but alignments complicate this. Pools allocate spans
+themselves for the space to allocate objects in.</p>
+<p>Large allocations are served by allocating an entire span.</p>
+<p>The allocator keeps a description of all the pages and pools in memory
+in thread-local variables. Using these, it is possible to arrive at the
+metadata describing any allocation with a few steps:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>address -&gt; page -&gt; span -&gt; pool?
+</pre></div>
+</div>
+<p>This is exploited by the <code class="docutils literal notranslate"><span class="pre">scylla</span> <span class="pre">ptr</span></code> command which, given an address,
+prints the following information:</p>
+<ul class="simple">
+<li><p>The allocation (small or large) this address is part of.</p></li>
+<li><p>The offset of the address from the beginning of the allocation.</p></li>
+<li><p>Is the object dead or live.</p></li>
+</ul>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">scylla</span> <span class="n">ptr</span> <span class="mh">0x6000000f3830</span>
+<span class="n">thread</span> <span class="mi">1</span><span class="p">,</span> <span class="n">small</span> <span class="p">(</span><span class="n">size</span> <span class="o">&lt;=</span> <span class="mi">512</span><span class="p">),</span> <span class="n">live</span> <span class="p">(</span><span class="mh">0x6000000f3800</span> <span class="o">+</span><span class="mi">48</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>It is possible to dump the state of the seastar allocator with the
+<code class="docutils literal notranslate"><span class="pre">scylla</span> <span class="pre">memory</span></code> command. This prints a report containing the state of
+all small pools as well as the availability of spans. It also prints
+other Scylla specific information.</p>
+</section>
+<section id="continuations-chains">
+<h4>Continuations chains<a class="headerlink" href="#continuations-chains" title="Permalink to this headline">¶</a></h4>
+<p>Continuation chains are everywhere in Scylla. Every execution flow takes the
+form of a continuation chain. This makes debugging very hard because the normal
+GDB commands for inspecting and controlling execution flow (<code class="docutils literal notranslate"><span class="pre">backtrace</span></code>, <code class="docutils literal notranslate"><span class="pre">up</span></code>,
+<code class="docutils literal notranslate"><span class="pre">down</span></code>, <code class="docutils literal notranslate"><span class="pre">step</span></code>, <code class="docutils literal notranslate"><span class="pre">next</span></code>, <code class="docutils literal notranslate"><span class="pre">return</span></code>, etc.) quickly fail to fulfill their purpose.
+One will quickly find that every backtrace just leads to the same event loop in
+the seastar reactor.</p>
+<p>Continuation chains are formed by tasks. The tasks form an intrusive forward
+linked list in memory. Each tasks links to the task that depends on it. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">future</span><span class="o">&lt;&gt;</span> <span class="n">bar</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">sleep</span><span class="p">(</span><span class="n">std</span><span class="p">::</span><span class="n">chrono</span><span class="p">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span><span class="o">.</span><span class="n">then</span><span class="p">([]</span> <span class="p">{</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+
+<span class="n">future</span><span class="o">&lt;&gt;</span> <span class="n">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">bar</span><span class="p">()</span><span class="o">.</span><span class="n">then</span><span class="p">([]</span> <span class="p">{</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>When foo() is called a continuation chain of 3 tasks will be created:</p>
+<ul class="simple">
+<li><p>T0: sleep()</p></li>
+<li><p>T1: bar()::lambda#1</p></li>
+<li><p>T2: foo()::lambda#1</p></li>
+</ul>
+<p>T1 depends on T0, and T2 depends on T1. In memory they form a forward linked
+list like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">T0</span> <span class="o">-&gt;</span> <span class="n">T1</span> <span class="o">-&gt;</span> <span class="n">T2</span>
+</pre></div>
+</div>
+<p>The links are provided by the promise-future pairs in these tasks. Each task
+contains a future half of one such pair and a promise half of another one. The
+future is for the value arriving from the previous task and the promise is for
+the value calculated in the local task, that the next task waits on.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">task</span></code> object have the following interface:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">task</span> <span class="p">{</span>
+    <span class="n">scheduling_group</span> <span class="n">_sg</span><span class="p">;</span>
+<span class="n">public</span><span class="p">:</span>
+    <span class="n">virtual</span> <span class="n">void</span> <span class="n">run_and_dispose</span><span class="p">()</span> <span class="n">noexcept</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">virtual</span> <span class="n">task</span><span class="o">*</span> <span class="n">waiting_task</span><span class="p">()</span> <span class="n">noexcept</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">scheduling_group</span> <span class="n">group</span><span class="p">()</span> <span class="n">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_sg</span><span class="p">;</span> <span class="p">}</span>
+    <span class="n">shared_backtrace</span> <span class="n">get_backtrace</span><span class="p">()</span> <span class="n">const</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>The only thing stored at a known offset is the scheduling group. Each task
+object also has an associated action that is executed when the task runs
+(<code class="docutils literal notranslate"><span class="pre">run_and_dispose()</span></code>), as well as pointer to the next task (returned by
+<code class="docutils literal notranslate"><span class="pre">waiting_task()</span></code>). However task being a polymorphic object the layout of the
+different kind of tasks is not known, so all we can say about them is that
+somewhere they contain a promise object, which has a pointer to the future object
+of the task that depends on them. Also note that continuations are just one kind
+of task, there are other kinds of tasks as well. Many seastar primites,
+like <code class="docutils literal notranslate"><span class="pre">do_with()</span></code>, <code class="docutils literal notranslate"><span class="pre">repeat()</span></code>, <code class="docutils literal notranslate"><span class="pre">do_until()</span></code>, etc. have their own task
+types.</p>
+<section id="traversing-the-continuation-chain-forward">
+<h5>Traversing the continuation chain forward<a class="headerlink" href="#traversing-the-continuation-chain-forward" title="Permalink to this headline">¶</a></h5>
+<p>Or in other words finding out what are the continuations waiting on this one.
+This involves searching for all outbound references in the task and identifying
+the one which is also a task. As this is quite a labour-intensive task, there is
+a command in scylla-gdb.py which automates it, called <code class="docutils literal notranslate"><span class="pre">scylla</span> <span class="pre">fiber</span></code>. Example
+usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">scylla</span> <span class="n">fiber</span> <span class="mh">0x60001a305910</span>
+<span class="n">Starting</span> <span class="n">task</span><span class="p">:</span> <span class="p">(</span><span class="n">task</span><span class="o">*</span><span class="p">)</span> <span class="mh">0x000060001a305910</span> <span class="mh">0x0000000004aa5260</span> <span class="n">vtable</span> <span class="k">for</span> <span class="n">seastar</span><span class="p">::</span><span class="n">continuation</span><span class="o">&lt;...&gt;</span> <span class="o">+</span> <span class="mi">16</span>
+<span class="c1">#0  (task*) 0x0000600016217c80 0x0000000004aa5288 vtable for seastar::continuation&lt;...&gt; + 16</span>
+<span class="c1">#1  (task*) 0x000060000ac42940 0x0000000004aa2aa0 vtable for seastar::continuation&lt;...&gt; + 16</span>
+<span class="c1">#2  (task*) 0x0000600023f59a50 0x0000000004ac1b30 vtable for seastar::continuation&lt;...&gt; + 16</span>
+</pre></div>
+</div>
+<p>This is somewhat similar to a backtrace, in that it shows tasks that are waiting
+for this continuation to finish, similar to how upstream functions are waiting
+for the called function to finish before continuing their own execution.
+See <code class="docutils literal notranslate"><span class="pre">help</span> <span class="pre">scylla</span> <span class="pre">fiber</span></code> and <code class="docutils literal notranslate"><span class="pre">scylla</span> <span class="pre">fiber</span> <span class="pre">--help</span></code> for more information on usage.</p>
+</section>
+<section id="traversing-the-continuation-chain-backward">
+<h5>Traversing the continuation chain backward<a class="headerlink" href="#traversing-the-continuation-chain-backward" title="Permalink to this headline">¶</a></h5>
+<p>Or in other words find the continuations the current continuation is waiting on.
+This involves searching for all references to the task and identifying the one
+which is also a task. This is made quite easy with the <code class="docutils literal notranslate"><span class="pre">scylla</span> <span class="pre">find</span></code> command
+from <code class="docutils literal notranslate"><span class="pre">scylla-gdb.py</span></code>. By using the <code class="docutils literal notranslate"><span class="pre">--resolve</span></code> flag, the vtable symbol will be
+printed next to each inbound reference, making spotting the other task easy.
+Once found, repeat the same with the pointer of the other task, until a
+non-continuation future is found, e.g. a I/O, <code class="docutils literal notranslate"><span class="pre">smp::submit()</span></code>, etc.</p>
+</section>
+<section id="seastar-threads">
+<h5>Seastar threads<a class="headerlink" href="#seastar-threads" title="Permalink to this headline">¶</a></h5>
+<p>Seastar threads are a special kind of continuation. Each seastar thread hosts a
+stack but it can also be linked into a continuation chain. The stack of seastar
+threads is a regular stack and all the normal stack related GDB commands can be
+used in it. This can be used to inspect where exactly the seastar thread
+stopped when it was suspended to wait on some future. Local variables can be
+inspected too. The catch is how to make GDB context switch into the
+stack of the seastar stack. Unfortunately there is no method that works
+with GDB as of now, the <code class="docutils literal notranslate"><span class="pre">scylla</span> <span class="pre">thread</span></code> command crashes GDB and even if it
+didn’t, it’d only works in live processes.
+To get this working a patched GDB is needed, see
+https://github.com/denesb/seastar-gdb for instructions on how to use.</p>
+</section>
+</section>
+<section id="debugging-assert-failures">
+<h4>Debugging assert failures<a class="headerlink" href="#debugging-assert-failures" title="Permalink to this headline">¶</a></h4>
+<p>Assert failures are the easiest (easiest but not easy) coredumps to debug
+because we know the condition that failed, we know where and thus the
+investigation has a clear scope – to find out why. This is not always easy
+though, especially if the root cause happened much earlier, and thus the state
+the node was in at that time is not observable in the coredump. The root cause
+might even be on another node altogether. In this case we try to gather as much
+information as possible and write debug patches that hopefully catch the problem
+earlier, and try to reproduce with them, hoping to get a new coredump that has
+more information.</p>
+</section>
+<section id="debugging-segmentation-faults">
+<h4>Debugging segmentation faults<a class="headerlink" href="#debugging-segmentation-faults" title="Permalink to this headline">¶</a></h4>
+<p>Segmentation faults are usually caused by use-after-free,
+use-after-move, dangling pointer/reference or memory corruption.
+Unfortunately, coredumps often contain very little immediate information on what
+exactly was wrong. It is rare to find something as obvious as a null pointer
+trying to be dereferenced. So one has to dig a little to find out what
+exactly triggered the SEGFAULT.
+The most useful command in this is <code class="docutils literal notranslate"><span class="pre">scylla</span> <span class="pre">ptr</span></code>, as it allows
+determining whether the address the current function is working with
+belongs to a live object or not.</p>
+<p>Once the immediate cause is found, only the “easy” part remains, finding
+out how it happened.
+In some cases this can be very difficult. For example in the case of a memory
+corruption overwriting memory belonging to another object, the overwrite
+could have happened much earlier, with no traces of what it was in the
+coredump. In this case the same method has to be used that was mentioned
+in the case of <a class="reference external" href="#debugging-assert-failures">debugging assert failures</a>:
+adding additional debug code and trying to reproduce, hoping to catch
+the perpetrator red-handed.</p>
+</section>
+<section id="debugging-deadlocks">
+<h4>Debugging deadlocks<a class="headerlink" href="#debugging-deadlocks" title="Permalink to this headline">¶</a></h4>
+<p>If the process that is stuck is known, start from there. Try to identify the
+continuation-chain that is stuck, then
+<a class="reference external" href="#traversing-the-continuation-chain-backward">follow it</a>
+to find the future that is blocking it all.
+There is no way to differentiate a stuck continuation chain from one
+that is making progress unfortunately, so there are not tried-and-proven
+methods here either.</p>
+</section>
+<section id="debugging-out-of-memory-oom-crashes">
+<h4>Debugging Out Of Memory (OOM) crashes<a class="headerlink" href="#debugging-out-of-memory-oom-crashes" title="Permalink to this headline">¶</a></h4>
+<p>OOM crashes are usually the hardest to debug issues. Not only one has to
+determine the immediate cause which is often already hard enough, as
+usual one also has to determine what lead to this state, how did it happen.</p>
+<p>That said, finding the immediate cause has a pretty standard procedure.
+The first step is always issuing a <code class="docutils literal notranslate"><span class="pre">scylla</span> <span class="pre">memory</span></code> command and
+determining where the memory is. Lets look at a concrete example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">scylla</span> <span class="n">memory</span>
+<span class="n">Used</span> <span class="n">memory</span><span class="p">:</span>    <span class="mi">7452069888</span>
+<span class="n">Free</span> <span class="n">memory</span><span class="p">:</span>      <span class="mi">20082688</span>
+<span class="n">Total</span> <span class="n">memory</span><span class="p">:</span>   <span class="mi">7472152576</span>
+
+<span class="n">LSA</span><span class="p">:</span>
+  <span class="n">allocated</span><span class="p">:</span>    <span class="mi">1067712512</span>
+  <span class="n">used</span><span class="p">:</span>         <span class="mi">1065353216</span>
+  <span class="n">free</span><span class="p">:</span>            <span class="mi">2359296</span>
+
+<span class="n">Cache</span><span class="p">:</span>
+  <span class="n">total</span><span class="p">:</span>            <span class="mi">393216</span>
+  <span class="n">used</span><span class="p">:</span>             <span class="mi">160704</span>
+  <span class="n">free</span><span class="p">:</span>             <span class="mi">232512</span>
+
+<span class="n">Memtables</span><span class="p">:</span>
+ <span class="n">total</span><span class="p">:</span>          <span class="mi">1067319296</span>
+ <span class="n">Regular</span><span class="p">:</span>
+  <span class="n">real</span> <span class="n">dirty</span><span class="p">:</span>    <span class="mi">1064566784</span>
+  <span class="n">virt</span> <span class="n">dirty</span><span class="p">:</span>     <span class="mi">811568656</span>
+ <span class="n">System</span><span class="p">:</span>
+  <span class="n">real</span> <span class="n">dirty</span><span class="p">:</span>        <span class="mi">393216</span>
+  <span class="n">virt</span> <span class="n">dirty</span><span class="p">:</span>        <span class="mi">393216</span>
+ <span class="n">Streaming</span><span class="p">:</span>
+  <span class="n">real</span> <span class="n">dirty</span><span class="p">:</span>             <span class="mi">0</span>
+  <span class="n">virt</span> <span class="n">dirty</span><span class="p">:</span>             <span class="mi">0</span>
+
+<span class="n">Coordinator</span><span class="p">:</span>
+  <span class="n">bg</span> <span class="n">write</span> <span class="nb">bytes</span><span class="p">:</span>         <span class="mi">42133</span> <span class="n">B</span>
+  <span class="n">hints</span><span class="p">:</span>                      <span class="mi">0</span> <span class="n">B</span>
+  <span class="n">view</span> <span class="n">hints</span><span class="p">:</span>                 <span class="mi">0</span> <span class="n">B</span>
+  <span class="mi">00</span> <span class="s2">&quot;main&quot;</span>
+    <span class="n">fg</span> <span class="n">writes</span><span class="p">:</span>              <span class="mi">0</span>
+    <span class="n">bg</span> <span class="n">writes</span><span class="p">:</span>              <span class="mi">0</span>
+    <span class="n">fg</span> <span class="n">reads</span><span class="p">:</span>               <span class="mi">0</span>
+    <span class="n">bg</span> <span class="n">reads</span><span class="p">:</span>              <span class="o">-</span><span class="mi">7</span>
+  <span class="mi">05</span> <span class="s2">&quot;statement&quot;</span>
+    <span class="n">fg</span> <span class="n">writes</span><span class="p">:</span>             <span class="mi">14</span>
+    <span class="n">bg</span> <span class="n">writes</span><span class="p">:</span>              <span class="mi">5</span>
+    <span class="n">fg</span> <span class="n">reads</span><span class="p">:</span>              <span class="mi">94</span>
+    <span class="n">bg</span> <span class="n">reads</span><span class="p">:</span>            <span class="mi">2352</span>
+
+<span class="n">Replica</span><span class="p">:</span>
+  <span class="n">Read</span> <span class="n">Concurrency</span> <span class="n">Semaphores</span><span class="p">:</span>
+    <span class="n">user</span> <span class="n">sstable</span> <span class="n">reads</span><span class="p">:</span>       <span class="mi">84</span><span class="o">/</span><span class="mi">100</span><span class="p">,</span> <span class="n">remaining</span> <span class="n">mem</span><span class="p">:</span>     <span class="mi">138033377</span> <span class="n">B</span><span class="p">,</span> <span class="n">queued</span><span class="p">:</span> <span class="mi">0</span>
+    <span class="n">streaming</span> <span class="n">sstable</span> <span class="n">reads</span><span class="p">:</span>   <span class="mi">0</span><span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="n">remaining</span> <span class="n">mem</span><span class="p">:</span>     <span class="mi">149443051</span> <span class="n">B</span><span class="p">,</span> <span class="n">queued</span><span class="p">:</span> <span class="mi">0</span>
+    <span class="n">system</span> <span class="n">sstable</span> <span class="n">reads</span><span class="p">:</span>      <span class="mi">0</span><span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="n">remaining</span> <span class="n">mem</span><span class="p">:</span>     <span class="mi">149443051</span> <span class="n">B</span><span class="p">,</span> <span class="n">queued</span><span class="p">:</span> <span class="mi">0</span>
+  <span class="n">Execution</span> <span class="n">Stages</span><span class="p">:</span>
+    <span class="n">data</span> <span class="n">query</span> <span class="n">stage</span><span class="p">:</span>
+         <span class="n">Total</span>                            <span class="mi">0</span>
+    <span class="n">mutation</span> <span class="n">query</span> <span class="n">stage</span><span class="p">:</span>
+         <span class="n">Total</span>                            <span class="mi">0</span>
+    <span class="n">apply</span> <span class="n">stage</span><span class="p">:</span>
+      <span class="mi">02</span> <span class="s2">&quot;streaming&quot;</span>                      <span class="mi">287</span>
+         <span class="n">Total</span>                            <span class="mi">287</span>
+  <span class="n">Tables</span> <span class="o">-</span> <span class="n">Ongoing</span> <span class="n">Operations</span><span class="p">:</span>
+    <span class="n">pending</span> <span class="n">writes</span> <span class="n">phaser</span> <span class="p">(</span><span class="n">top</span> <span class="mi">10</span><span class="p">):</span>
+             <span class="mi">12</span> <span class="n">cqlstress_lwt_example</span><span class="o">.</span><span class="n">blogposts</span>
+              <span class="mi">2</span> <span class="n">system</span><span class="o">.</span><span class="n">paxos</span>
+             <span class="mi">14</span> <span class="n">Total</span> <span class="p">(</span><span class="nb">all</span><span class="p">)</span>
+    <span class="n">pending</span> <span class="n">reads</span> <span class="n">phaser</span> <span class="p">(</span><span class="n">top</span> <span class="mi">10</span><span class="p">):</span>
+           <span class="mi">1863</span> <span class="n">system</span><span class="o">.</span><span class="n">paxos</span>
+            <span class="mi">809</span> <span class="n">cqlstress_lwt_example</span><span class="o">.</span><span class="n">blogposts</span>
+           <span class="mi">2672</span> <span class="n">Total</span> <span class="p">(</span><span class="nb">all</span><span class="p">)</span>
+    <span class="n">pending</span> <span class="n">streams</span> <span class="n">phaser</span> <span class="p">(</span><span class="n">top</span> <span class="mi">10</span><span class="p">):</span>
+              <span class="mi">0</span> <span class="n">Total</span> <span class="p">(</span><span class="nb">all</span><span class="p">)</span>
+
+<span class="n">Small</span> <span class="n">pools</span><span class="p">:</span>
+<span class="n">objsz</span> <span class="n">spansz</span>    <span class="n">usedobj</span>       <span class="n">memory</span>       <span class="n">unused</span>  <span class="n">wst</span><span class="o">%</span>
+    <span class="mi">1</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">1</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">1</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">1</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">2</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">2</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">3</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">3</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">4</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">5</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">6</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">7</span>   <span class="mi">4096</span>          <span class="mi">0</span>            <span class="mi">0</span>            <span class="mi">0</span>   <span class="mf">0.0</span>
+    <span class="mi">8</span>   <span class="mi">4096</span>      <span class="mi">15285</span>       <span class="mi">126976</span>         <span class="mi">4696</span>   <span class="mf">3.7</span>
+   <span class="mi">10</span>   <span class="mi">4096</span>          <span class="mi">0</span>         <span class="mi">8192</span>         <span class="mi">8192</span>  <span class="mf">99.9</span>
+   <span class="mi">12</span>   <span class="mi">4096</span>        <span class="mi">173</span>         <span class="mi">8192</span>         <span class="mi">6116</span>  <span class="mf">74.6</span>
+   <span class="mi">14</span>   <span class="mi">4096</span>          <span class="mi">0</span>         <span class="mi">8192</span>         <span class="mi">8192</span>  <span class="mf">99.8</span>
+   <span class="mi">16</span>   <span class="mi">4096</span>      <span class="mi">11151</span>       <span class="mi">184320</span>         <span class="mi">5904</span>   <span class="mf">1.0</span>
+   <span class="mi">20</span>   <span class="mi">4096</span>       <span class="mi">3570</span>        <span class="mi">77824</span>         <span class="mi">6424</span>   <span class="mf">7.9</span>
+   <span class="mi">24</span>   <span class="mi">4096</span>      <span class="mi">19131</span>       <span class="mi">462848</span>         <span class="mi">3704</span>   <span class="mf">0.4</span>
+   <span class="mi">28</span>   <span class="mi">4096</span>       <span class="mi">2572</span>        <span class="mi">77824</span>         <span class="mi">5808</span>   <span class="mf">7.3</span>
+   <span class="mi">32</span>   <span class="mi">4096</span>      <span class="mi">27021</span>       <span class="mi">868352</span>         <span class="mi">3680</span>   <span class="mf">0.4</span>
+   <span class="mi">40</span>   <span class="mi">4096</span>      <span class="mi">14680</span>       <span class="mi">593920</span>         <span class="mi">6720</span>   <span class="mf">0.7</span>
+   <span class="mi">48</span>   <span class="mi">4096</span>       <span class="mi">3318</span>       <span class="mi">163840</span>         <span class="mi">4576</span>   <span class="mf">2.4</span>
+   <span class="mi">56</span>   <span class="mi">4096</span>      <span class="mi">12077</span>       <span class="mi">692224</span>        <span class="mi">15912</span>   <span class="mf">0.9</span>
+   <span class="mi">64</span>   <span class="mi">4096</span>      <span class="mi">52719</span>      <span class="mi">3375104</span>         <span class="mi">1088</span>   <span class="mf">0.0</span>
+   <span class="mi">80</span>   <span class="mi">4096</span>      <span class="mi">16382</span>      <span class="mi">1323008</span>        <span class="mi">12448</span>   <span class="mf">0.6</span>
+   <span class="mi">96</span>   <span class="mi">4096</span>      <span class="mi">17045</span>      <span class="mi">1667072</span>        <span class="mi">30752</span>   <span class="mf">0.3</span>
+  <span class="mi">112</span>   <span class="mi">4096</span>       <span class="mi">3402</span>       <span class="mi">397312</span>        <span class="mi">16288</span>   <span class="mf">2.5</span>
+  <span class="mi">128</span>   <span class="mi">4096</span>      <span class="mi">17767</span>      <span class="mi">2281472</span>         <span class="mi">7296</span>   <span class="mf">0.3</span>
+  <span class="mi">160</span>   <span class="mi">4096</span>      <span class="mi">17722</span>      <span class="mi">2912256</span>        <span class="mi">76736</span>   <span class="mf">0.3</span>
+  <span class="mi">192</span>   <span class="mi">4096</span>       <span class="mi">8094</span>      <span class="mi">1585152</span>        <span class="mi">31104</span>   <span class="mf">0.4</span>
+  <span class="mi">224</span>   <span class="mi">4096</span>      <span class="mi">17087</span>      <span class="mi">3891200</span>        <span class="mi">63712</span>   <span class="mf">0.1</span>
+  <span class="mi">256</span>   <span class="mi">4096</span>      <span class="mi">77945</span>     <span class="mi">21274624</span>      <span class="mi">1320704</span>   <span class="mf">0.1</span>
+  <span class="mi">320</span>   <span class="mi">8192</span>      <span class="mi">13232</span>      <span class="mi">4366336</span>       <span class="mi">132096</span>   <span class="mf">0.7</span>
+  <span class="mi">384</span>   <span class="mi">8192</span>       <span class="mi">5571</span>      <span class="mi">2203648</span>        <span class="mi">64384</span>   <span class="mf">1.0</span>
+  <span class="mi">448</span>   <span class="mi">4096</span>       <span class="mi">4290</span>      <span class="mi">1986560</span>        <span class="mi">64640</span>   <span class="mf">1.7</span>
+  <span class="mi">512</span>   <span class="mi">4096</span>       <span class="mi">2830</span>      <span class="mi">1503232</span>        <span class="mi">54272</span>   <span class="mf">2.8</span>
+  <span class="mi">640</span>  <span class="mi">12288</span>        <span class="mi">960</span>       <span class="mi">655360</span>        <span class="mi">40960</span>   <span class="mf">3.9</span>
+  <span class="mi">768</span>  <span class="mi">12288</span>       <span class="mi">5751</span>      <span class="mi">4489216</span>        <span class="mi">72448</span>   <span class="mf">0.1</span>
+  <span class="mi">896</span>   <span class="mi">8192</span>        <span class="mi">326</span>       <span class="mi">311296</span>        <span class="mi">19200</span>   <span class="mf">4.6</span>
+ <span class="mi">1024</span>   <span class="mi">4096</span>       <span class="mi">4320</span>      <span class="mi">5677056</span>      <span class="mi">1253376</span>   <span class="mf">0.7</span>
+ <span class="mi">1280</span>  <span class="mi">20480</span>        <span class="mi">251</span>       <span class="mi">425984</span>       <span class="mi">104704</span>  <span class="mf">22.2</span>
+ <span class="mi">1536</span>  <span class="mi">12288</span>       <span class="mi">3818</span>      <span class="mi">6373376</span>       <span class="mi">508928</span>   <span class="mf">1.7</span>
+ <span class="mi">1792</span>  <span class="mi">16384</span>       <span class="mi">2711</span>      <span class="mi">4980736</span>       <span class="mi">122624</span>   <span class="mf">0.9</span>
+ <span class="mi">2048</span>   <span class="mi">8192</span>        <span class="mi">594</span>      <span class="mi">1343488</span>       <span class="mi">126976</span>   <span class="mf">9.5</span>
+ <span class="mi">2560</span>  <span class="mi">20480</span>        <span class="mi">122</span>       <span class="mi">458752</span>       <span class="mi">146432</span>  <span class="mf">25.7</span>
+ <span class="mi">3072</span>  <span class="mi">12288</span>       <span class="mi">6596</span>     <span class="mi">21823488</span>      <span class="mi">1560576</span>   <span class="mf">0.9</span>
+ <span class="mi">3584</span>  <span class="mi">28672</span>          <span class="mi">6</span>       <span class="mi">294912</span>       <span class="mi">273408</span>  <span class="mf">91.1</span>
+ <span class="mi">4096</span>  <span class="mi">16384</span>       <span class="mi">2039</span>      <span class="mi">8372224</span>        <span class="mi">20480</span>   <span class="mf">0.2</span>
+ <span class="mi">5120</span>  <span class="mi">20480</span>       <span class="mi">7885</span>     <span class="mi">43220992</span>      <span class="mi">2849792</span>   <span class="mf">0.3</span>
+ <span class="mi">6144</span>  <span class="mi">24576</span>       <span class="mi">8188</span>     <span class="mi">54099968</span>      <span class="mi">3792896</span>   <span class="mf">0.8</span>
+ <span class="mi">7168</span>  <span class="mi">28672</span>         <span class="mi">30</span>       <span class="mi">622592</span>       <span class="mi">407552</span>  <span class="mf">53.0</span>
+ <span class="mi">8192</span>  <span class="mi">32768</span>       <span class="mi">8091</span>     <span class="mi">66781184</span>       <span class="mi">499712</span>   <span class="mf">0.7</span>
+<span class="mi">10240</span>  <span class="mi">40960</span>      <span class="mi">15058</span>    <span class="mi">165216256</span>     <span class="mi">11022336</span>   <span class="mf">0.4</span>
+<span class="mi">12288</span>  <span class="mi">49152</span>       <span class="mi">7034</span>     <span class="mi">92471296</span>      <span class="mi">6037504</span>   <span class="mf">0.3</span>
+<span class="mi">14336</span>  <span class="mi">57344</span>       <span class="mi">6815</span>    <span class="mi">111935488</span>     <span class="mi">14235648</span>   <span class="mf">0.2</span>
+<span class="mi">16384</span>  <span class="mi">65536</span>      <span class="mi">14046</span>    <span class="mi">230555648</span>       <span class="mi">425984</span>   <span class="mf">0.2</span>
+<span class="n">Small</span> <span class="n">allocations</span><span class="p">:</span> <span class="mi">872148992</span> <span class="p">[</span><span class="n">B</span><span class="p">]</span>
+<span class="n">Page</span> <span class="n">spans</span><span class="p">:</span>
+<span class="n">index</span>      <span class="n">size</span> <span class="p">[</span><span class="n">B</span><span class="p">]</span>      <span class="n">free</span> <span class="p">[</span><span class="n">B</span><span class="p">]</span>     <span class="n">large</span> <span class="p">[</span><span class="n">B</span><span class="p">]</span> <span class="p">[</span><span class="n">spans</span><span class="p">]</span>
+    <span class="mi">0</span>          <span class="mi">4096</span>       <span class="mi">1888256</span>             <span class="mi">0</span>       <span class="mi">0</span>
+    <span class="mi">1</span>          <span class="mi">8192</span>        <span class="mi">663552</span>             <span class="mi">0</span>       <span class="mi">0</span>
+    <span class="mi">2</span>         <span class="mi">16384</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+    <span class="mi">3</span>         <span class="mi">32768</span>         <span class="mi">32768</span>    <span class="mi">2320334848</span>   <span class="mi">70811</span>
+    <span class="mi">4</span>         <span class="mi">65536</span>         <span class="mi">65536</span>    <span class="mi">3031105536</span>   <span class="mi">46251</span>
+    <span class="mi">5</span>        <span class="mi">131072</span>        <span class="mi">131072</span>    <span class="mi">1161822208</span>    <span class="mi">8864</span>
+    <span class="mi">6</span>        <span class="mi">262144</span>       <span class="mi">3145728</span>             <span class="mi">0</span>       <span class="mi">0</span>
+    <span class="mi">7</span>        <span class="mi">524288</span>        <span class="mi">524288</span>             <span class="mi">0</span>       <span class="mi">0</span>
+    <span class="mi">8</span>       <span class="mi">1048576</span>       <span class="mi">1048576</span>             <span class="mi">0</span>       <span class="mi">0</span>
+    <span class="mi">9</span>       <span class="mi">2097152</span>             <span class="mi">0</span>       <span class="mi">2097152</span>       <span class="mi">1</span>
+   <span class="mi">10</span>       <span class="mi">4194304</span>      <span class="mi">12582912</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">11</span>       <span class="mi">8388608</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">12</span>      <span class="mi">16777216</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">13</span>      <span class="mi">33554432</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">14</span>      <span class="mi">67108864</span>             <span class="mi">0</span>      <span class="mi">67108864</span>       <span class="mi">1</span>
+   <span class="mi">15</span>     <span class="mi">134217728</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">16</span>     <span class="mi">268435456</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">17</span>     <span class="mi">536870912</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">18</span>    <span class="mi">1073741824</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">19</span>    <span class="mi">2147483648</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">20</span>    <span class="mi">4294967296</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">21</span>    <span class="mi">8589934592</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">22</span>   <span class="mi">17179869184</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">23</span>   <span class="mi">34359738368</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">24</span>   <span class="mi">68719476736</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">25</span>  <span class="mi">137438953472</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">26</span>  <span class="mi">274877906944</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">27</span>  <span class="mi">549755813888</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">28</span> <span class="mi">1099511627776</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">29</span> <span class="mi">2199023255552</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">30</span> <span class="mi">4398046511104</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+   <span class="mi">31</span> <span class="mi">8796093022208</span>             <span class="mi">0</span>             <span class="mi">0</span>       <span class="mi">0</span>
+<span class="n">Large</span> <span class="n">allocations</span><span class="p">:</span> <span class="mi">6582468608</span> <span class="p">[</span><span class="n">B</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>We can see a couple of things at glance here: free memory is very low,
+cache is fully evicted. These are sure signs of a real OOM. Note that
+free memory doesn’t have to be 0 in the case of an OOM. It is enough for
+a size pool to not be able to allocate more memory spans and thus fail
+a critical allocations we cannot recover from. Also cache is fully
+evicted doesn’t mean it has 0 memory, but when it has just a couple of
+KB, it is considered fully evicted. Cache is evicted by the seastar memory
+allocator’s memory reclamation mechanism, which is hooked up with the
+cache and will start trying to free up memory by evicting the cache,
+once memory runs low.
+The cause of the OOM in this case is too many reads (1863) on
+<code class="docutils literal notranslate"><span class="pre">system.paxos</span></code>. This can be seen in the replica section of the report.
+The Coordinator and replica sections contain high level stats of the
+state of the coordinator and replica respectively. These stats summarize
+the usual suspects. Sometimes just looking at these is enough to
+determine what is the cause of the OOM. If not, one has to look at the
+last section: the dump of the state of the small pools and the page
+spans. What we are looking for is a small pool or a span size that owns
+excessive amounts of memory. Once found (there can be more then one) the
+next task is to identify what the objects owning that memory are. Note
+that in the case of smaller allocations, the memory is usually occupied
+directly by some C++ object, why in the case of larger allocations, these are
+usually potentially fragmented buffers, owned by some other object.</p>
+<p>If the <code class="docutils literal notranslate"><span class="pre">scylla</span> <span class="pre">memory</span></code> output alone is not enough to explain what
+exactly is eating up all the memory, there are some further usual
+suspects that should be examined.</p>
+<section id="exploded-task-and-smp-queues-and-lots-of-objects">
+<h5>Exploded task- and smp-queues and lots of objects<a class="headerlink" href="#exploded-task-and-smp-queues-and-lots-of-objects" title="Permalink to this headline">¶</a></h5>
+<p>Look for exploded task- and smp-queues with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scylla</span> <span class="n">task</span><span class="o">-</span><span class="n">queues</span>        <span class="c1"># lists all task queues on the local shard</span>
+<span class="n">scylla</span> <span class="n">smp</span><span class="o">-</span><span class="n">queues</span>         <span class="c1"># lists smp queues</span>
+</pre></div>
+</div>
+<p>Look for lots of objects with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scylla</span> <span class="n">task_histogram</span> <span class="o">-</span><span class="n">a</span>  <span class="c1"># histogram of all objects with a vtable</span>
+</pre></div>
+</div>
+<p>A huge number in any of these reports can indicate problems of exploding
+concurrency, or a shard not being to keep up. This can easily lead to work
+accumulating, in the form of tasks and associated objects, to the point of OOM.</p>
+</section>
+<section id="expensive-reads">
+<h5>Expensive reads<a class="headerlink" href="#expensive-reads" title="Permalink to this headline">¶</a></h5>
+<p>Another usual suspect is the number of sstables. This can be queried via
+<code class="docutils literal notranslate"><span class="pre">scylla</span> <span class="pre">sstables</span></code>. A large number of sstables for a single table (in the
+hundreds or more) can cause an otherwise non-problematic amount of reads to use
+excessive amount of memory, potentially leading to OOM.</p>
+<p>Reversed- and unpaged-reads (or both, combined) can also consume a huge amount
+of memory, to the point of a fiew of such reads causing OOM. The way to find
+these is to inspect readers in memory, trying to locate their partition slice
+and having a look at their respective options:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">partition_slice::option::reversed</span></code> is set for a reversed query</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">partition_slice::option::allow_short_read</span></code> is cleared for an unpaged
+query</p></li>
+</ul>
+<p>Note that scylla have protections against reverse queries since 4.0, and against
+unpaged queries since 4.3.</p>
+</section>
+<section id="other-reasons">
+<h5>Other reasons<a class="headerlink" href="#other-reasons" title="Permalink to this headline">¶</a></h5>
+<p>If none of the usual suspects are present then all bets are off and one has to
+try to identify who the objects of the exploded size-class or span-size belong
+to. Unfortunately there are no proven methods here: some try to inspect
+the memory patterns and try to make sense of it, some try to build an
+object graph out of these objects and make sense of that. For the
+latter, the following commands might be of help:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scylla</span> <span class="n">small</span><span class="o">-</span><span class="n">objects</span>         <span class="c1"># lists objects from a small pool</span>
+<span class="n">scylla</span> <span class="n">generate</span><span class="o">-</span><span class="nb">object</span><span class="o">-</span><span class="n">graph</span> <span class="c1"># generates and visualizes an object graph</span>
+</pre></div>
+</div>
+<p>Good luck, you are off the charted path here.</p>
+</section>
+</section>
+</section>
+</section>
+</section>
+
+        </div>
+
+        <div id="sidebar" class="large-3 large-pull-6 columns"><div class="side-nav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Scylla Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../alternator/alternator.html">Alternator: DynamoDB API in Scylla</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design-notes/index.html">Design Notes</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Guides</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="HACKING.html">Guidelines for developing Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_v2.html">Scylla RESTful API V2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building.html">Building Scylla</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Debugging with GDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="docker-hub.html">Docker Hub Image</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging in Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tracing.html">Tracing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/index.html">Contribute</a></li>
+</ul>
+
+</div>
+        </div>
+
+        <div class="large-3 columns">
+            
+                <div class="scylla-dropdown single-version">
+    <a href="#" data-options="align:bottom" data-dropdown="drop-versions" class="scylla-dropdown__button">
+        
+            master
+        
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-versions" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+            
+              <li><a href="debugging.html">master</a></li>
+            
+    </ul>
+</div>
+            
+        </div>
+
+    </div>
+</section>
+
+<!-- newsleter modal -->
+
+<div id="newsletter_signup" class="reveal-modal tiny radius dark_modal" data-reveal aria-labelledby="modalTitle" aria-hidden="true" role="dialog">
+    <a class="close-reveal-modal" aria-label="Close">×</a>
+    <h2 id="modalTitle">Sign up for the Scylla newsletter</h2>
+    <div id="mc_embed_signup">
+        <form action="//cloudius-systems.us10.list-manage.com/subscribe/post?u=df8bb543c68230d5f7b4dcf78&amp;id=9a4589f144" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate="">
+            <div id="mc_embed_signup_scroll">
+
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-EMAIL">Email</label></div>
+                        <div class="small-9 columns"><input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-FNAME">First Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="FNAME" class="" id="mce-FNAME"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-LNAME">Last Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="LNAME" class="" id="mce-LNAME"></div>
+                    </div>
+                </div>
+                <div id="mce-responses" class="clear">
+                    <div class="response" id="mce-error-response" style="display:none"></div>
+                    <div class="response" id="mce-success-response" style="display:none"></div>
+                </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                <div style="position: absolute; left: -5000px;"><input type="text" name="b_df8bb543c68230d5f7b4dcf78_9a4589f144" tabindex="-1" value=""></div>
+                <div class="clear"><input type="submit" class="button" value="Sign up" name="subscribe" id="mc-embedded-subscribe"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- end newsleter modal -->
+
+
+
+<!-- footer.html -->
+<footer id="footer">
+    <div class="footer-top">
+        <a class="logo" href="https://www.scylladb.com"><img src="../_static/img/logo-scylla-horizontal-RGB.svg" alt=""></a>
+        <div class="footer-links">
+            <a class="link" href="https://docs.scylladb.com">Docs</a>
+            <a class="link" href="https://www.scylladb.com/company/contact-us/">Contact Us</a>
+            <a class="link" href="https://www.scylladb.com/company/">About Us</a>
+          <div class="scylla-dropdown">
+    <a href="#" data-options="align:top" data-dropdown="drop-contribute" class="scylla-dropdown__button">
+        Contribute 
+        <i class="fa fa-github" aria-hidden="true"></i>
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-contribute" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+        <li><a href="https://github.com/scylladb/scylla/issues/new?title=Issue in page Debugging with GDB&&body=I%20would%20like%20to%20report%20an%20issue%20in%20page%20https://scylla.docs.scylladb.com/master/guides/debugging%0A%0A%23%23%23%20Problem%0A%0A%23%23%23%20%20Suggest%20a%20fix" target="_blank">Report a doc issue <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+        <li><a href="https://docs.scylladb.com/contribute/" target="_blank">Learn how to contribute <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+    </ul>
+</div>
+        </div>
+        <div class="footer-actions">
+            <a class="link-icon" href="https://github.com/ScyllaDB" target="_blank">
+                <span class="icon-github2"></span></a>
+            <a class="link-icon" href="https://twitter.com/ScyllaDB" target="_blank">
+                <span class="icon-twitter"></span></a>
+            <a class="link-icon" href="https://www.linkedin.com/company/scylladb"  target="_blank">
+                <span class="icon-linkedin2"></span></a>
+            <a class="link-icon" href="https://www.facebook.com/scylladb/" target="_blank">
+                <span class="icon-facebook"></span></a>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <div class="footer-info">
+            <div class="footer-copyright">
+                &#169; 2021, ScyllaDB. All rights reserved.
+            </div>
+            <div class="footer-last-updated">
+                Last updated on 20 July 2021.
+            </div>
+            <div class="footer-version">
+                Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+                &amp; <a href="https://sphinx-theme.scylladb.com">ScyllaDB Theme 0.1.25</a>
+            </div>
+        </div>
+        <div class="footer-links">
+        </div>
+    </div>
+</footer>
+<!-- end footer.html -->
+
+<!-- bodyscripts.html -->
+<!-- at the end of the BODY --> 
+<script src="../_static/js/vendor/jquery.js"></script>
+<script src="../_static/js/vendor/jquery.cookie.min.js"></script>
+<script src="../_static/expertrec.js"></script>
+<script src="../_static/js/foundation/foundation.js"></script>
+<script src="../_static/js/foundation/foundation.topbar.js"></script>
+<script src="../_static/js/foundation/foundation.dropdown.js"></script>
+<script src="../_static/app.js"></script>
+<script>
+    $(document).foundation();
+</script>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T8P2JP"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+  <!-- end bodyscripts.html -->
+</body>
+</html>

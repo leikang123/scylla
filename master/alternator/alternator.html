@@ -1,0 +1,457 @@
+
+
+
+<!doctype html>
+<html class="no-js" lang="en">
+  
+<head><!-- begin head.html -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>
+    Alternator: DynamoDB API in Scylla | Scylla Docs
+    </title>
+    <meta name="description" content="Scylla is an Apache Cassandra-compatible NoSQL data store that can handle 1 million transactions per second on a single server."/>
+
+    <link rel="icon" href="../_static/img/favicon.ico" type="image/x-icon"/>
+    <link rel="canonical" href="https://docs.scylladb.com/">
+    <link rel="author" href="mailto:info@scylladb.com">
+    <link rel="stylesheet" href="../_static/" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/segment.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/menu.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/tab.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/tabs.css" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/css/doc/main.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css"/>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+
+    <script src="../_static/js/vendor/modernizr.js"></script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-T8P2JP');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Marketo -->
+    <script type="text/javascript"> (function() { var didInit = false; function initMunchkin() { if(didInit === false) { didInit = true; Munchkin.init('791-QBF-350'); } } var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//munchkin.marketo.net/munchkin.js'; s.onreadystatechange = function() { if (this.readyState == 'complete' || this.readyState == 'loaded') { initMunchkin(); } }; s.onload = initMunchkin; document.getElementsByTagName('head')[0].appendChild(s); })(); </script>
+    <!-- End Marketo -->
+
+<!-- end head.html -->
+</head>
+
+<body>
+
+
+
+<header id="header" class="animated">
+    <div class="topbar_continer contain-to-grid clearfix">
+        <nav class="top-bar" id="top-bar" data-topbar role="navigation">
+            <ul class="title-area">
+                <li class="name">
+                    <div class="logo">
+                        <a href="https://docs.scylladb.com/"><img src="../_static/img/logo-scylla-docs.svg" alt="" width="151"></a>
+                    </div>
+                </li>
+                <li class="toggle-topbar"><a href="#"><span class="icon-manu"></span></a></li>
+            </ul>
+            <section class="top-bar-section clearfix">
+                <ul class="right">
+                    
+                    <li>
+                        <a href="https://scylla.docs.scylladb.com">Scylla Developer Notes</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://university.scylladb.com/">Scylla University</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://www.scylladb.com/">ScyllaDB Home</a>
+                    </li>
+                    
+                    <li class="search_continer show-for-medium-up">	
+                        <ci-search></ci-search>	
+                    </li>	
+                </ul>
+            </section>
+        </nav>
+    </div>
+</header>
+<section id="content">
+    <div class="row">
+	
+	<div class="large-6 large-push-3 columns">
+
+        
+
+        <section id="alternator-dynamodb-api-in-scylla">
+<h1>Alternator: DynamoDB API in Scylla<a class="headerlink" href="#alternator-dynamodb-api-in-scylla" title="Permalink to this headline">¶</a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Alternator is a Scylla feature adding compatibility with Amazon DynamoDB(TM).
+DynamoDB’s API uses JSON-encoded requests and responses which are sent over
+an HTTP or HTTPS transport. It is described in detail in Amazon’s <a class="reference external" href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/">DynamoDB
+API Reference</a>.</p>
+<p>Our goal is that any application written to use Amazon DynamoDB could
+be run, unmodified, against Scylla with Alternator enabled. Alternator’s
+compatibility with DynamoDB is fairly complete, but users should be aware
+of some differences and some unimplemented features. The extent of
+Alternator’s compatibility with DynamoDB is described in the
+<a class="reference internal" href="compatibility.html"><span class="doc">Scylla Alternator for DynamoDB users</span></a> document,
+which is updated as the work on Alternator progresses and compatibility
+continues to improve.</p>
+</section>
+<section id="running-alternator">
+<h2>Running Alternator<a class="headerlink" href="#running-alternator" title="Permalink to this headline">¶</a></h2>
+<p>By default, Scylla does not listen for DynamoDB API requests. To enable
+this API in Scylla you must set at least two configuration options,
+<strong>alternator_port</strong> and <strong>alternator_write_isolation</strong>. For example in the
+YAML configuration file:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">alternator_port</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">8000</span>
+<span class="l l-Scalar l-Scalar-Plain">alternator_write_isolation</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">only_rmw_uses_lwt</span> <span class="c1"># or always, forbid or unsafe</span>
+</pre></div>
+</div>
+<p>or, equivalently, via command-line arguments: `–alternator-port=8000
+–alternator-write-isolation=only_rmw_uses_lwt.</p>
+<p>the <strong>alternator_port</strong> option determines on which port Scylla listens for
+DynamoDB API requests. By default, it listens on this port on all network
+interfaces. To listen only on a specific interface, configure also the
+<strong>alternator_address</strong> option.</p>
+<p>The meaning of the <strong>alternator_write_isolation</strong> option is explained in detail
+in the “Write isolation policies” below. Alternator has four different choices
+for the implementation of writes, each with different advantages. You should
+carefully consider which of the options makes more sense for your intended
+use case and configure alternator_write_isolation accordingly. There is
+currently no default for this option: Trying to run Scylla with an Alternator
+port selected but without configuring write isolation will result in an error
+asking you to set it.</p>
+<p>In addition to (or instead of) serving HTTP requests on alternator_port,
+Scylla can accept DynamoDB API requests over HTTPS (encrypted), on the port
+specified by <strong>alternator_https_port</strong>. As usual for HTTPS servers, the
+operator must specify certificate and key files. By default these should
+be placed in <code class="docutils literal notranslate"><span class="pre">/etc/scylla/scylla.crt</span></code> and <code class="docutils literal notranslate"><span class="pre">/etc/scylla/scylla.key</span></code>, but
+these default locations can overridden by specifying
+<code class="docutils literal notranslate"><span class="pre">--alternator-encryption-options</span> <span class="pre">keyfile=&quot;...&quot;</span></code> and
+<code class="docutils literal notranslate"><span class="pre">--alternator-encryption-options</span> <span class="pre">certificate=&quot;...&quot;</span></code>.</p>
+<p>DynamoDB applications specify a single “endpoint” address, e.g.,
+<code class="docutils literal notranslate"><span class="pre">dynamodb.us-east-1.amazonaws.com</span></code>. Behind the scenes, a DNS server and/or
+load balancers distribute the connections to many different backend nodes.
+Alternator does not provide such a load-balancing setup, so you should
+either set one up, or set up the client library to do the load balancing
+itself. Instructions, code and examples for doing this can be found in the
+<a class="reference external" href="https://github.com/scylladb/alternator-load-balancing/">Alternator Load Balancing project</a>.</p>
+</section>
+<section id="alternator-specific-api">
+<h2>Alternator-specific API<a class="headerlink" href="#alternator-specific-api" title="Permalink to this headline">¶</a></h2>
+<section id="write-isolation-policies">
+<h3>Write isolation policies<a class="headerlink" href="#write-isolation-policies" title="Permalink to this headline">¶</a></h3>
+<p>DynamoDB API update requests may involve a read before the write - e.g., a
+<em>conditional</em> update or an update based on the old value of an attribute.
+The read and the write should be treated as a single transaction - protected
+(<em>isolated</em>) from other parallel writes to the same item.</p>
+<p>Alternator could do this isolation by using Scylla’s LWT (lightweight
+transactions) for every write operation, but this significantly slows
+down writes, and not necessary for workloads which don’t use read-modify-write
+(RMW) updates.</p>
+<p>So Alternator supports four <em>write isolation policies</em>, which can be chosen
+on a per-table basis and may make sense for certain workloads as explained
+below.</p>
+<p>A default write isolation policy <strong>must</strong> be chosen using the
+<code class="docutils literal notranslate"><span class="pre">--alternator-write-isolation</span></code> configuration option. Additionally, the write
+isolation policy for a specific table can be overridden by tagging the table
+(at CreateTable time, or any time later with TagResource) with the key
+<code class="docutils literal notranslate"><span class="pre">system:write_isolation</span></code>, and one of the following values:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">always</span></code>, or <code class="docutils literal notranslate"><span class="pre">always_use_lwt</span></code> - This mode performs every write
+operation - even those that do not need a read before the write - as a
+lightweight transaction.</p>
+<p>This is the slowest choice, but also the only choice guaranteed to work
+correctly for every workload.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">forbid</span></code>, or <code class="docutils literal notranslate"><span class="pre">forbid_rmw</span></code> - This mode <em>forbids</em> write requests
+which need a read before the write. An attempt to use such statements
+(e.g.,  UpdateItem with a ConditionExpression) will result in an error.
+In this mode, the remaining write requests which are allowed - pure writes
+without a read - are performed using standard Scylla writes, not LWT,
+so they are significantly faster than they would have been in the
+<code class="docutils literal notranslate"><span class="pre">always_use_lwt</span></code>, but their isolation is still correct.</p>
+<p>This mode is the fastest mode which is still guaranteed to be always
+safe. However, it is not useful for workloads that do need read-modify-
+write requests on this table - which this mode forbids.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">o</span></code>, or <code class="docutils literal notranslate"><span class="pre">only_rmw_uses_lwt</span></code> - This mode uses LWT only for updates that
+require read-modify-write, and does normal quorum writes for write-only
+updates.</p>
+<p>The benefit of this mode is that it allows fast write-only updates to some
+items, while still allowing some slower read-modify-write operations to
+other items. However, This mode is only safe if the workload does not mix
+read-modify-write and write-only updates to the same item, concurrently.
+It cannot verify that this condition is actually honored by the workload.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">u</span></code>, <code class="docutils literal notranslate"><span class="pre">unsafe</span></code>, or <code class="docutils literal notranslate"><span class="pre">unsafe_rmw</span></code> - This mode performs read-modify-write
+operations as separate reads and writes, without any isolation guarantees.
+It is the fastest option, but not safe - it does not correctly isolate
+read-modify-write updates. This mode is not recommended for any use case,
+and will likely be removed in the future.</p></li>
+</ul>
+</section>
+<section id="accessing-system-tables-from-scylla">
+<h3>Accessing system tables from Scylla<a class="headerlink" href="#accessing-system-tables-from-scylla" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Scylla exposes lots of useful information via its internal system tables,
+which can be found in system keyspaces: ‘system’, ‘system_auth’, etc.
+In order to access to these tables via alternator interface,
+Scan and Query requests can use a special table name:
+.scylla.alternator.KEYSPACE_NAME.TABLE_NAME
+which will return results fetched from corresponding Scylla table.
+This interface can be used only to fetch data from system tables.
+Attempts to read regular tables via the virtual interface will result
+in an error.
+Example: in order to query the contents of Scylla’s system.large_rows,
+pass TableName=’.scylla.alternator.system.large_rows’ to a Query/Scan request.</p></li>
+</ul>
+</section>
+</section>
+<section id="alternator-design-and-implementation">
+<h2>Alternator design and implementation<a class="headerlink" href="#alternator-design-and-implementation" title="Permalink to this headline">¶</a></h2>
+<p>This section provides only a very brief introduction to Alternator’s
+design. A much more detailed document about the features of the DynamoDB
+API and how they are, or could be, implemented in Scylla can be found in:
+https://docs.google.com/document/d/1i4yjF5OSAazAY_-T8CBce9-2ykW4twx_E_Nt2zDoOVs</p>
+<p>Almost all of Alternator’s source code (except some initialization code)
+can be found in the alternator/ subdirectory of Scylla’s source code.
+Extensive functional tests can be found in the alternator-test/
+subdirectory. These tests are written in Python, and can be run against
+both Alternator and Amazon’s DynamoDB; This allows verifying that
+Alternator’s behavior matches the one observed on DynamoDB.
+See alternator-test/README.md for more information about the tests and
+how to run them.</p>
+<p>With Alternator enabled on port 8000 (for example), every Scylla node
+listens for DynamoDB API requests on this port. These requests, in
+JSON format over HTTP, are parsed and result in calls to internal Scylla
+C++ functions - there is no CQL generation or parsing involved.
+In Scylla terminology, the node receiving the request acts as the the
+<em>coordinator</em>, and often passes the request on to one or more other nodes -
+<em>replicas</em> which hold copies of the requested data.</p>
+<p>Alternator tables are stored as Scylla tables, each in a separate keyspace.
+Each keyspace is initialized when the corresponding Alternator table is
+created (with a CreateTable request). The replication factor (RF) for this
+keyspace is chosen at that point, depending on the size of the cluster:
+RF=3 is used on clusters with three or more nodes, and RF=1 is used for
+smaller clusters. Such smaller clusters are, of course, only recommended
+for tests because of the risk of data loss.</p>
+<p>Each table in Alternator is stored as a Scylla table in a separate
+keyspace. The DynamoDB key columns (hash and sort key) have known types,
+and become partition and clustering key columns of the Scylla table.
+All other attributes may be different for each row, so are stored in one
+map column in Scylla, and not as separate columns.</p>
+<p>DynamoDB supports two consistency levels for reads, “eventual consistency”
+and “strong consistency”. These two modes are implemented using Scylla’s CL
+(consistency level) feature: All writes are done using the <code class="docutils literal notranslate"><span class="pre">LOCAL_QUORUM</span></code>
+consistency level, then strongly-consistent reads are done with
+<code class="docutils literal notranslate"><span class="pre">LOCAL_QUORUM</span></code>, while eventually-consistent reads are with just <code class="docutils literal notranslate"><span class="pre">LOCAL_ONE</span></code>.</p>
+<p>In Scylla (and its inspiration, Cassandra), high write performance is
+achieved by ensuring that writes do not require reads from disk.
+The DynamoDB API, however, provides many types of requests that need a read
+before the write (a.k.a. RMW requests - read-modify-write). For example,
+a request may copy an existing attribute, increment an attribute,
+be conditional on some expression involving existing values of attribute,
+or request that the previous values of attributes be returned. These
+read-modify-write transactions should be <em>isolated</em> from each other, so
+by default Alternator implements every write operation using Scylla’s
+LWT (lightweight transactions). This default can be overridden on a per-table
+basis, by tagging the table as explained above in the “write isolation
+policies” section.</p>
+<p>DynamoDB allows attributes to be <strong>nested</strong> - a top-level attribute may
+be a list or a map, and each of its elements may further be lists or
+maps, etc. Alternator currently stores the entire content of a top-level
+attribute as one JSON object. This means that UpdateItem requests which
+want modify a non-top-level attribute directly (e.g., a.b[3].c) need RMW:
+Alternator implements such requests by reading the entire top-level
+attribute a, modifying only a.b[3].c, and then writing back a.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started With ScyllaDB Alternator</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#installing-scylla">Installing Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#testing-scylla-s-dynamodb-api-support">Testing Scylla’s DynamoDB API support:</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="compatibility.html">Scylla Alternator for DynamoDB users</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="compatibility.html#provisioning">Provisioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compatibility.html#load-balancing">Load balancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compatibility.html#write-isolation-policies">Write isolation policies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compatibility.html#authorization">Authorization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compatibility.html#unimplemented-api-features">Unimplemented API features</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+        </div>
+
+        <div id="sidebar" class="large-3 large-pull-6 columns"><div class="side-nav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Scylla Developer Documentation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Alternator: DynamoDB API in Scylla</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html">Getting Started With ScyllaDB Alternator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compatibility.html">Scylla Alternator for DynamoDB users</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../design-notes/index.html">Design Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/index.html">Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/index.html">Contribute</a></li>
+</ul>
+
+</div>
+        </div>
+
+        <div class="large-3 columns">
+            
+                <div class="scylla-dropdown single-version">
+    <a href="#" data-options="align:bottom" data-dropdown="drop-versions" class="scylla-dropdown__button">
+        
+            master
+        
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-versions" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+            
+              <li><a href="alternator.html">master</a></li>
+            
+    </ul>
+</div>
+            
+        </div>
+
+    </div>
+</section>
+
+<!-- newsleter modal -->
+
+<div id="newsletter_signup" class="reveal-modal tiny radius dark_modal" data-reveal aria-labelledby="modalTitle" aria-hidden="true" role="dialog">
+    <a class="close-reveal-modal" aria-label="Close">×</a>
+    <h2 id="modalTitle">Sign up for the Scylla newsletter</h2>
+    <div id="mc_embed_signup">
+        <form action="//cloudius-systems.us10.list-manage.com/subscribe/post?u=df8bb543c68230d5f7b4dcf78&amp;id=9a4589f144" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate="">
+            <div id="mc_embed_signup_scroll">
+
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-EMAIL">Email</label></div>
+                        <div class="small-9 columns"><input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-FNAME">First Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="FNAME" class="" id="mce-FNAME"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-LNAME">Last Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="LNAME" class="" id="mce-LNAME"></div>
+                    </div>
+                </div>
+                <div id="mce-responses" class="clear">
+                    <div class="response" id="mce-error-response" style="display:none"></div>
+                    <div class="response" id="mce-success-response" style="display:none"></div>
+                </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                <div style="position: absolute; left: -5000px;"><input type="text" name="b_df8bb543c68230d5f7b4dcf78_9a4589f144" tabindex="-1" value=""></div>
+                <div class="clear"><input type="submit" class="button" value="Sign up" name="subscribe" id="mc-embedded-subscribe"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- end newsleter modal -->
+
+
+
+<!-- footer.html -->
+<footer id="footer">
+    <div class="footer-top">
+        <a class="logo" href="https://www.scylladb.com"><img src="../_static/img/logo-scylla-horizontal-RGB.svg" alt=""></a>
+        <div class="footer-links">
+            <a class="link" href="https://docs.scylladb.com">Docs</a>
+            <a class="link" href="https://www.scylladb.com/company/contact-us/">Contact Us</a>
+            <a class="link" href="https://www.scylladb.com/company/">About Us</a>
+          <div class="scylla-dropdown">
+    <a href="#" data-options="align:top" data-dropdown="drop-contribute" class="scylla-dropdown__button">
+        Contribute 
+        <i class="fa fa-github" aria-hidden="true"></i>
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-contribute" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+        <li><a href="https://github.com/scylladb/scylla/issues/new?title=Issue in page Alternator: DynamoDB API in Scylla&&body=I%20would%20like%20to%20report%20an%20issue%20in%20page%20https://scylla.docs.scylladb.com/master/alternator/alternator%0A%0A%23%23%23%20Problem%0A%0A%23%23%23%20%20Suggest%20a%20fix" target="_blank">Report a doc issue <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+        <li><a href="https://docs.scylladb.com/contribute/" target="_blank">Learn how to contribute <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+    </ul>
+</div>
+        </div>
+        <div class="footer-actions">
+            <a class="link-icon" href="https://github.com/ScyllaDB" target="_blank">
+                <span class="icon-github2"></span></a>
+            <a class="link-icon" href="https://twitter.com/ScyllaDB" target="_blank">
+                <span class="icon-twitter"></span></a>
+            <a class="link-icon" href="https://www.linkedin.com/company/scylladb"  target="_blank">
+                <span class="icon-linkedin2"></span></a>
+            <a class="link-icon" href="https://www.facebook.com/scylladb/" target="_blank">
+                <span class="icon-facebook"></span></a>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <div class="footer-info">
+            <div class="footer-copyright">
+                &#169; 2021, ScyllaDB. All rights reserved.
+            </div>
+            <div class="footer-last-updated">
+                Last updated on 20 July 2021.
+            </div>
+            <div class="footer-version">
+                Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+                &amp; <a href="https://sphinx-theme.scylladb.com">ScyllaDB Theme 0.1.25</a>
+            </div>
+        </div>
+        <div class="footer-links">
+        </div>
+    </div>
+</footer>
+<!-- end footer.html -->
+
+<!-- bodyscripts.html -->
+<!-- at the end of the BODY --> 
+<script src="../_static/js/vendor/jquery.js"></script>
+<script src="../_static/js/vendor/jquery.cookie.min.js"></script>
+<script src="../_static/expertrec.js"></script>
+<script src="../_static/js/foundation/foundation.js"></script>
+<script src="../_static/js/foundation/foundation.topbar.js"></script>
+<script src="../_static/js/foundation/foundation.dropdown.js"></script>
+<script src="../_static/app.js"></script>
+<script>
+    $(document).foundation();
+</script>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T8P2JP"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+  <!-- end bodyscripts.html -->
+</body>
+</html>

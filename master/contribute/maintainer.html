@@ -1,0 +1,459 @@
+
+
+
+<!doctype html>
+<html class="no-js" lang="en">
+  
+<head><!-- begin head.html -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>
+    Maintainer’s handbook | Scylla Docs
+    </title>
+    <meta name="description" content="Scylla is an Apache Cassandra-compatible NoSQL data store that can handle 1 million transactions per second on a single server."/>
+
+    <link rel="icon" href="../_static/img/favicon.ico" type="image/x-icon"/>
+    <link rel="canonical" href="https://docs.scylladb.com/">
+    <link rel="author" href="mailto:info@scylladb.com">
+    <link rel="stylesheet" href="../_static/" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/segment.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/menu.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/tab.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/tabs.css" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/css/doc/main.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css"/>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+
+    <script src="../_static/js/vendor/modernizr.js"></script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-T8P2JP');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Marketo -->
+    <script type="text/javascript"> (function() { var didInit = false; function initMunchkin() { if(didInit === false) { didInit = true; Munchkin.init('791-QBF-350'); } } var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//munchkin.marketo.net/munchkin.js'; s.onreadystatechange = function() { if (this.readyState == 'complete' || this.readyState == 'loaded') { initMunchkin(); } }; s.onload = initMunchkin; document.getElementsByTagName('head')[0].appendChild(s); })(); </script>
+    <!-- End Marketo -->
+
+<!-- end head.html -->
+</head>
+
+<body>
+
+
+
+<header id="header" class="animated">
+    <div class="topbar_continer contain-to-grid clearfix">
+        <nav class="top-bar" id="top-bar" data-topbar role="navigation">
+            <ul class="title-area">
+                <li class="name">
+                    <div class="logo">
+                        <a href="https://docs.scylladb.com/"><img src="../_static/img/logo-scylla-docs.svg" alt="" width="151"></a>
+                    </div>
+                </li>
+                <li class="toggle-topbar"><a href="#"><span class="icon-manu"></span></a></li>
+            </ul>
+            <section class="top-bar-section clearfix">
+                <ul class="right">
+                    
+                    <li>
+                        <a href="https://scylla.docs.scylladb.com">Scylla Developer Notes</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://university.scylladb.com/">Scylla University</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://www.scylladb.com/">ScyllaDB Home</a>
+                    </li>
+                    
+                    <li class="search_continer show-for-medium-up">	
+                        <ci-search></ci-search>	
+                    </li>	
+                </ul>
+            </section>
+        </nav>
+    </div>
+</header>
+<section id="content">
+    <div class="row">
+	
+	<div class="large-6 large-push-3 columns">
+
+        
+
+        <section id="maintainer-s-handbook">
+<h1>Maintainer’s handbook<a class="headerlink" href="#maintainer-s-handbook" title="Permalink to this headline">¶</a></h1>
+<p>This document describes the mechanics of maintaining
+Scylla - how to do things, rather than what do do
+(e.g. accept or reject a patch).</p>
+<section id="general-git-tips">
+<h2>General git tips<a class="headerlink" href="#general-git-tips" title="Permalink to this headline">¶</a></h2>
+<section id="enable-reusing-recorded-resolutions">
+<h3>Enable reusing recorded resolutions<a class="headerlink" href="#enable-reusing-recorded-resolutions" title="Permalink to this headline">¶</a></h3>
+<p>The command</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">config</span> <span class="o">--</span><span class="k">global</span> <span class="n">rerere</span><span class="o">.</span><span class="n">enabled</span> <span class="n">true</span>
+</pre></div>
+</div>
+<p>will record merge conflict resolutions and replay them
+when git encounters the same conflict. This is helpful
+when managing multiple branches that see similar conflicts.</p>
+</section>
+<section id="set-merge-conflictstyle-to-diff3">
+<h3>Set merge.conflictstyle to diff3<a class="headerlink" href="#set-merge-conflictstyle-to-diff3" title="Permalink to this headline">¶</a></h3>
+<p>The command</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">config</span> <span class="o">--</span><span class="k">global</span> <span class="n">diff</span><span class="o">.</span><span class="n">conflictstyle</span> <span class="o">=</span> <span class="n">diff3</span>
+</pre></div>
+</div>
+<p>will set the conflict markers to three-way diff style.
+This records not only “ours” and “theirs”, but also the
+common ancestor. This allows the maintainer to see the
+intent of each change and aids in resolution.</p>
+</section>
+<section id="git-submodule-sync">
+<h3><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">submodule</span> <span class="pre">sync</span></code><a class="headerlink" href="#git-submodule-sync" title="Permalink to this headline">¶</a></h3>
+<p>Avoid using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">submodule</span> <span class="pre">sync</span></code> as it sets internal state
+that is easy to forget, and which can wreak havoc if you do
+forget it.</p>
+</section>
+</section>
+<section id="applying-patches-and-patch-series">
+<h2>Applying patches and patch series<a class="headerlink" href="#applying-patches-and-patch-series" title="Permalink to this headline">¶</a></h2>
+<p>Patches can arrive via mailing lists and github pull
+requests. Either way, they should be applied to the
+<code class="docutils literal notranslate"><span class="pre">next</span></code> branch, not <code class="docutils literal notranslate"><span class="pre">master</span></code>.</p>
+<p>Sometimes, patches and patch series have dependencies.
+It’s important to verify that those dependencies are
+satisfied. In the case of patch series, make sure
+the series base contains the dependency, otherwise
+bisectability is compromised.</p>
+<p>A series base can be found with the command</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">merge</span><span class="o">-</span><span class="n">base</span> <span class="n">remote</span><span class="o">/</span><span class="n">series_branch_or_tag</span> <span class="n">origin</span><span class="o">/</span><span class="n">master</span>
+</pre></div>
+</div>
+<section id="applying-patches-and-patch-series-from-the-mailing-list">
+<h3>Applying patches and patch series from the mailing list<a class="headerlink" href="#applying-patches-and-patch-series-from-the-mailing-list" title="Permalink to this headline">¶</a></h3>
+<p>Before you begin, check out the <code class="docutils literal notranslate"><span class="pre">next</span></code> branch and pull
+from scylla.git to be up to date. If the pull isn’t clean,
+abort the merge and use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span> <span class="pre">--rebase</span></code>. Examine the result
+to see if you forgot to push a previously applied patch.</p>
+</section>
+<section id="applying-single-patches-from-the-mailing-list">
+<h3>Applying single patches from the mailing list<a class="headerlink" href="#applying-single-patches-from-the-mailing-list" title="Permalink to this headline">¶</a></h3>
+<p>Save the patch(es) to some directory, and use the command</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">am</span> <span class="o">-</span><span class="n">im3</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">patches</span><span class="o">/*.</span><span class="n">eml</span>
+</pre></div>
+</div>
+<p>to apply the patches. <code class="docutils literal notranslate"><span class="pre">-i</span></code> makes the process interactive and
+lets you edit the commit message, <code class="docutils literal notranslate"><span class="pre">-m</span></code> sets the Message-Id
+tag (which is used by Commit Bot to set the Reply-To header,
+so that the commit acknowledgement appears as a response to
+the patch), and <code class="docutils literal notranslate"><span class="pre">-3</span></code> enables 3-way merging which is rumored
+to reduce conflicts.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span></code> to publish the patches.</p>
+</section>
+<section id="applying-patch-series-from-the-mailing-list">
+<h3>Applying patch series from the mailing list<a class="headerlink" href="#applying-patch-series-from-the-mailing-list" title="Permalink to this headline">¶</a></h3>
+<p>Indentify the git url and branch/tag identifier, and issue
+the command</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">pull</span> <span class="o">--</span><span class="n">log</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">ff</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">rebase</span> <span class="o">&lt;</span><span class="n">url</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">branch</span><span class="o">/</span><span class="n">tag</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">--log</span></code> flag generates a list of patches in the commit log,
+while <code class="docutils literal notranslate"><span class="pre">--no-ff</span></code> and <code class="docutils literal notranslate"><span class="pre">--no-rebase</span></code> ensure a merge commit is created.</p>
+<p>Copy the cover letter subject and body to the merge commit’s
+subject and body, respectively. Make sure the merge commit
+supplies enough information to understand what the series is
+doing without having to read individual commits.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span></code> to publish the patches.</p>
+</section>
+<section id="applying-patches-and-patch-series-from-github-pull-requests">
+<h3>Applying patches and patch series from github pull requests<a class="headerlink" href="#applying-patches-and-patch-series-from-github-pull-requests" title="Permalink to this headline">¶</a></h3>
+<p>A common contributor mistake is to base patches on <code class="docutils literal notranslate"><span class="pre">next</span></code>
+rather than on <code class="docutils literal notranslate"><span class="pre">master</span></code>. This results in random commits
+appearing in the pull request, if <code class="docutils literal notranslate"><span class="pre">next</span></code> is edited for some
+reason.</p>
+<p>Ensure that the target branch in the pull request page is
+set to <code class="docutils literal notranslate"><span class="pre">scylladb:next</span></code> (click Edit and change it if that’s
+not the case).</p>
+<p>When merging, verify that github didn’t mangle the commit
+log, check both your and the contributor’s email address
+are correct (no &#64;noreply.users.github.com or similar
+address, or home vs. work addresses).</p>
+</section>
+<section id="applying-single-patches-from-github-pull-requests">
+<h3>Applying single patches from github pull requests<a class="headerlink" href="#applying-single-patches-from-github-pull-requests" title="Permalink to this headline">¶</a></h3>
+<p>Select “Squash and merge” and follow through.</p>
+</section>
+<section id="applying-patch-series-from-github-pull-requests">
+<h3>Applying patch series from github pull requests<a class="headerlink" href="#applying-patch-series-from-github-pull-requests" title="Permalink to this headline">¶</a></h3>
+<p>Select “Create a merge commit” and do NOT follow through -
+github will attribute itself as the commiter. Instead, click
+“view command line options”, select the “git pull” line,
+paste it to a terminal and add <code class="docutils literal notranslate"><span class="pre">--no-ff</span> <span class="pre">--log</span></code> and execute.</p>
+</section>
+</section>
+<section id="dequeuing-bad-patches">
+<h2>Dequeuing bad patches<a class="headerlink" href="#dequeuing-bad-patches" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes, a patch fails promotion by Jenkins, or needs to
+be dequeued for some other reason. This section explains how.</p>
+<ol class="simple">
+<li><p>Synchronize with origin by checking out <code class="docutils literal notranslate"><span class="pre">next</span></code> and
+issuing a <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code></p></li>
+<li><p>Issue <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">rebase</span> <span class="pre">-i</span> <span class="pre">--rebase-merges</span> <span class="pre">origin/master</span></code></p></li>
+<li><p>Identify the final section that contains the pick/merge
+command that will contain the result. Ignore any intermediate
+sections that describe branches.</p></li>
+<li><p>Delete pick/merge commands that correspond to bad commits</p></li>
+<li><p>Save the file and let <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">rebase</span></code> do the work</p></li>
+<li><p>Publish your changes with <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">--force-with-lease</span></code></p></li>
+</ol>
+<p>Note: git contains a bug where branch descriptions with the
+characters <code class="docutils literal notranslate"><span class="pre">['&quot;:\.]</span></code> confuse it. Best to search-and-replace those
+characters with nothing.</p>
+</section>
+<section id="updating-submodule-references">
+<h2>Updating submodule references<a class="headerlink" href="#updating-submodule-references" title="Permalink to this headline">¶</a></h2>
+<p>Submodules are maintained in separate repositories. For example, Seastar
+is developed upstream independently of Scylla. We want to periodically
+(and upon contributor request) refresh scylla.git to include the
+latest submodules.</p>
+<ol class="simple">
+<li><p>Check out the <code class="docutils literal notranslate"><span class="pre">next</span></code> branch and synchronize it using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code></p></li>
+<li><p>Run the <code class="docutils literal notranslate"><span class="pre">scripts/refresh-submodules.sh</span></code> script, which will open a git
+commit log editor for every submodule to show that commits are being
+updated.</p></li>
+<li><p>Edit the submodule update commits with any necessary additional
+imformation. For example, amend the message with <code class="docutils literal notranslate"><span class="pre">Fixes</span></code> tags.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span></code> to publish your work.</p></li>
+</ol>
+</section>
+<section id="backporting-patches">
+<h2>Backporting patches<a class="headerlink" href="#backporting-patches" title="Permalink to this headline">¶</a></h2>
+<p>To backport a patch, check out the next branch of the relevant
+release branch (e.g. next-3.2), syncrhonize it with scylla.git,
+and use the cherry-pick command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">cherry</span><span class="o">-</span><span class="n">pick</span> <span class="o">-</span><span class="n">x</span> <span class="o">&lt;</span><span class="n">commit</span> <span class="nb">hash</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>for individual commits, and</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">cherry</span><span class="o">-</span><span class="n">pick</span> <span class="o">-</span><span class="n">x</span> <span class="o">-</span><span class="n">m</span> <span class="mi">1</span> <span class="o">&lt;</span><span class="n">commit</span> <span class="nb">hash</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>for merge commits. <code class="docutils literal notranslate"><span class="pre">-x</span></code> leaves a reference to the original commit
+hash, and <code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">1</span></code> indicates which is the “mainline” parent of the
+merge commit.</p>
+<p>If conflicts cannot be resolved with reasonable effort, ask the
+contributor for help.</p>
+</section>
+<section id="backporting-seastar-commits">
+<h2>Backporting Seastar commits<a class="headerlink" href="#backporting-seastar-commits" title="Permalink to this headline">¶</a></h2>
+<p>The first time a release branch needs a Seastar backport requires
+creating a Seastar branch. This is done in a separate repository:</p>
+<ol class="simple">
+<li><p>Check out the next branch for your release branch (e.g.
+<code class="docutils literal notranslate"><span class="pre">next-3.2</span></code>) and synchronize using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code>.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">submodule</span> <span class="pre">update</span></code> to syncrhonize the submodule</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">seastar</span></code> to enter the submodule</p></li>
+<li><p>Create a new branch (e.g. <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">-b</span> <span class="pre">branch-3.2</span></code>)
+corresponding to the release series you are backporting to.
+Note, the regular branch name is used, not the next branch.</p></li>
+<li><p>Use `git push -u scylla-seastar branch-3.2’ to publish the
+branch. Note, scylla-seastar here is a git remote that refers
+to https://github.com/scylladb/scylla-seastar.git, a
+repository used for holding seastar backports for scylla.git.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">..</span></code> to return to scylla.git.</p></li>
+<li><p>Edit <code class="docutils literal notranslate"><span class="pre">.gitmodules</span></code> to change <code class="docutils literal notranslate"><span class="pre">../seastar</span></code> to <code class="docutils literal notranslate"><span class="pre">../scylla-seastar</span></code>.
+This points the seastar submodule at the backports repository.</p></li>
+<li><p>Commit with a descriptive message and push to the relevant next
+branch.</p></li>
+</ol>
+<p>After this is done, backporting seastar patches can proceed:</p>
+<ol class="simple">
+<li><p>Check out the next branch for your release branch (e.g.
+<code class="docutils literal notranslate"><span class="pre">next-3.2</span></code>) and synchronize using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">pull</span></code>.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">submodule</span> <span class="pre">update</span></code> to syncrhonize the submodule</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">seastar</span></code> to enter the submodule</p></li>
+<li><p>Check out the relevant branch (<code class="docutils literal notranslate"><span class="pre">branch-3.2</span></code> in our example)</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">cherry-pick</span> <span class="pre">-x</span> <span class="pre">&lt;hash&gt;</span></code>
+(or <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">cherry-pick</span> <span class="pre">-x</span> <span class="pre">-m</span> <span class="pre">1</span> <span class="pre">&lt;hash&gt;</span></code>) to backport patches.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span></code> to publish the scylla-seastar.git patches.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">..</span></code> to return to scylla.git.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">submodule</span> <span class="pre">summary</span> <span class="pre">seastar</span></code> to create a change log.</p></li>
+<li><p>Commit using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">seastar</span></code>, populate change log from
+step 8.</p></li>
+<li><p>Publish using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span></code>.</p></li>
+</ol>
+</section>
+</section>
+
+        </div>
+
+        <div id="sidebar" class="large-3 large-pull-6 columns"><div class="side-nav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Scylla Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../alternator/alternator.html">Alternator: DynamoDB API in Scylla</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design-notes/index.html">Design Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/index.html">Guides</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Contribute</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="CONTRIBUTING.html">Contributing to Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backport.html">Backport</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Maintainer’s handbook</a></li>
+<li class="toctree-l2"><a class="reference internal" href="review-checklist.html">Review Checklist</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+        </div>
+
+        <div class="large-3 columns">
+            
+                <div class="scylla-dropdown single-version">
+    <a href="#" data-options="align:bottom" data-dropdown="drop-versions" class="scylla-dropdown__button">
+        
+            master
+        
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-versions" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+            
+              <li><a href="maintainer.html">master</a></li>
+            
+    </ul>
+</div>
+            
+        </div>
+
+    </div>
+</section>
+
+<!-- newsleter modal -->
+
+<div id="newsletter_signup" class="reveal-modal tiny radius dark_modal" data-reveal aria-labelledby="modalTitle" aria-hidden="true" role="dialog">
+    <a class="close-reveal-modal" aria-label="Close">×</a>
+    <h2 id="modalTitle">Sign up for the Scylla newsletter</h2>
+    <div id="mc_embed_signup">
+        <form action="//cloudius-systems.us10.list-manage.com/subscribe/post?u=df8bb543c68230d5f7b4dcf78&amp;id=9a4589f144" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate="">
+            <div id="mc_embed_signup_scroll">
+
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-EMAIL">Email</label></div>
+                        <div class="small-9 columns"><input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-FNAME">First Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="FNAME" class="" id="mce-FNAME"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-LNAME">Last Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="LNAME" class="" id="mce-LNAME"></div>
+                    </div>
+                </div>
+                <div id="mce-responses" class="clear">
+                    <div class="response" id="mce-error-response" style="display:none"></div>
+                    <div class="response" id="mce-success-response" style="display:none"></div>
+                </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                <div style="position: absolute; left: -5000px;"><input type="text" name="b_df8bb543c68230d5f7b4dcf78_9a4589f144" tabindex="-1" value=""></div>
+                <div class="clear"><input type="submit" class="button" value="Sign up" name="subscribe" id="mc-embedded-subscribe"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- end newsleter modal -->
+
+
+
+<!-- footer.html -->
+<footer id="footer">
+    <div class="footer-top">
+        <a class="logo" href="https://www.scylladb.com"><img src="../_static/img/logo-scylla-horizontal-RGB.svg" alt=""></a>
+        <div class="footer-links">
+            <a class="link" href="https://docs.scylladb.com">Docs</a>
+            <a class="link" href="https://www.scylladb.com/company/contact-us/">Contact Us</a>
+            <a class="link" href="https://www.scylladb.com/company/">About Us</a>
+          <div class="scylla-dropdown">
+    <a href="#" data-options="align:top" data-dropdown="drop-contribute" class="scylla-dropdown__button">
+        Contribute 
+        <i class="fa fa-github" aria-hidden="true"></i>
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-contribute" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+        <li><a href="https://github.com/scylladb/scylla/issues/new?title=Issue in page Maintainer’s handbook&&body=I%20would%20like%20to%20report%20an%20issue%20in%20page%20https://scylla.docs.scylladb.com/master/contribute/maintainer%0A%0A%23%23%23%20Problem%0A%0A%23%23%23%20%20Suggest%20a%20fix" target="_blank">Report a doc issue <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+        <li><a href="https://docs.scylladb.com/contribute/" target="_blank">Learn how to contribute <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+    </ul>
+</div>
+        </div>
+        <div class="footer-actions">
+            <a class="link-icon" href="https://github.com/ScyllaDB" target="_blank">
+                <span class="icon-github2"></span></a>
+            <a class="link-icon" href="https://twitter.com/ScyllaDB" target="_blank">
+                <span class="icon-twitter"></span></a>
+            <a class="link-icon" href="https://www.linkedin.com/company/scylladb"  target="_blank">
+                <span class="icon-linkedin2"></span></a>
+            <a class="link-icon" href="https://www.facebook.com/scylladb/" target="_blank">
+                <span class="icon-facebook"></span></a>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <div class="footer-info">
+            <div class="footer-copyright">
+                &#169; 2021, ScyllaDB. All rights reserved.
+            </div>
+            <div class="footer-last-updated">
+                Last updated on 20 July 2021.
+            </div>
+            <div class="footer-version">
+                Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+                &amp; <a href="https://sphinx-theme.scylladb.com">ScyllaDB Theme 0.1.25</a>
+            </div>
+        </div>
+        <div class="footer-links">
+        </div>
+    </div>
+</footer>
+<!-- end footer.html -->
+
+<!-- bodyscripts.html -->
+<!-- at the end of the BODY --> 
+<script src="../_static/js/vendor/jquery.js"></script>
+<script src="../_static/js/vendor/jquery.cookie.min.js"></script>
+<script src="../_static/expertrec.js"></script>
+<script src="../_static/js/foundation/foundation.js"></script>
+<script src="../_static/js/foundation/foundation.topbar.js"></script>
+<script src="../_static/js/foundation/foundation.dropdown.js"></script>
+<script src="../_static/app.js"></script>
+<script>
+    $(document).foundation();
+</script>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T8P2JP"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+  <!-- end bodyscripts.html -->
+</body>
+</html>

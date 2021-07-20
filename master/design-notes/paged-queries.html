@@ -1,0 +1,714 @@
+
+
+
+<!doctype html>
+<html class="no-js" lang="en">
+  
+<head><!-- begin head.html -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>
+    Paged queries | Scylla Docs
+    </title>
+    <meta name="description" content="Scylla is an Apache Cassandra-compatible NoSQL data store that can handle 1 million transactions per second on a single server."/>
+
+    <link rel="icon" href="../_static/img/favicon.ico" type="image/x-icon"/>
+    <link rel="canonical" href="https://docs.scylladb.com/">
+    <link rel="author" href="mailto:info@scylladb.com">
+    <link rel="stylesheet" href="../_static/" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/segment.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/menu.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/tab.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/tabs.css" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/css/doc/main.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css"/>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+
+    <script src="../_static/js/vendor/modernizr.js"></script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-T8P2JP');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Marketo -->
+    <script type="text/javascript"> (function() { var didInit = false; function initMunchkin() { if(didInit === false) { didInit = true; Munchkin.init('791-QBF-350'); } } var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//munchkin.marketo.net/munchkin.js'; s.onreadystatechange = function() { if (this.readyState == 'complete' || this.readyState == 'loaded') { initMunchkin(); } }; s.onload = initMunchkin; document.getElementsByTagName('head')[0].appendChild(s); })(); </script>
+    <!-- End Marketo -->
+
+<!-- end head.html -->
+</head>
+
+<body>
+
+
+
+<header id="header" class="animated">
+    <div class="topbar_continer contain-to-grid clearfix">
+        <nav class="top-bar" id="top-bar" data-topbar role="navigation">
+            <ul class="title-area">
+                <li class="name">
+                    <div class="logo">
+                        <a href="https://docs.scylladb.com/"><img src="../_static/img/logo-scylla-docs.svg" alt="" width="151"></a>
+                    </div>
+                </li>
+                <li class="toggle-topbar"><a href="#"><span class="icon-manu"></span></a></li>
+            </ul>
+            <section class="top-bar-section clearfix">
+                <ul class="right">
+                    
+                    <li>
+                        <a href="https://scylla.docs.scylladb.com">Scylla Developer Notes</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://university.scylladb.com/">Scylla University</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://www.scylladb.com/">ScyllaDB Home</a>
+                    </li>
+                    
+                    <li class="search_continer show-for-medium-up">	
+                        <ci-search></ci-search>	
+                    </li>	
+                </ul>
+            </section>
+        </nav>
+    </div>
+</header>
+<section id="content">
+    <div class="row">
+	
+	<div class="large-6 large-push-3 columns">
+
+        
+
+        <section id="paged-queries">
+<h1>Paged queries<a class="headerlink" href="#paged-queries" title="Permalink to this headline">¶</a></h1>
+<p>Queries can return any amount of data. The amount of data is only found
+out when the query is actually executed. This creates all sorts of
+resource management problems for the client as well as for the database.
+To avoid these problems query results are transmitted in chunks of
+limited size, one chunk at a time. After transmitting each chunk the
+database stops and waits for the client to request the next one. This is
+repeated until the entire result set is transitted. This is called
+paging.</p>
+<p>The size of pages can be limited by the client by the number of rows
+they can contain. There is also a built-in (non-optional) size limit of
+1MB. If a page reaches the size limit before it reaches the
+client-provided row limit it’s called a short page or short read.</p>
+<p>To be able to continue the query on the next page the database has to
+remember where it stopped. This is done by recording the position where
+the query was interrupted when the page was filled in an opaque (to the
+client) cookie called the <em>paging state</em>. This cookie is transmitted
+with every page to the client and the client has to retransmit it to the
+database on every page request. Since the paging state is completely
+opaque (just a binary blob) to the client it can be used to store other
+query-related state besides just the page end position.</p>
+<section id="how-did-they-work">
+<h2>How did they work?<a class="headerlink" href="#how-did-they-work" title="Permalink to this headline">¶</a></h2>
+<section id="single-partition-queries">
+<h3>Single partition queries<a class="headerlink" href="#single-partition-queries" title="Permalink to this headline">¶</a></h3>
+<p>The coordinator selects a list of replicas for each partition to send
+read requests to (IN queries are considered single partition queries
+also).
+The set of replicas is selected such that it satisfies required CL. An
+additional replica may be selected for a speculative read. All read
+requests are sent concurrently.</p>
+<p>The replica executes the read request via <code class="docutils literal notranslate"><span class="pre">database::query()</span></code> and when
+the page is filled it sends the results back to the coordinator.</p>
+<p>At the end of each page, if there is more data expected (either the row
+or the memory limits of the page were reached), the coordinator saves
+the last partition key and the last clustering key in the paging state.
+In case of an IN query, if the data returned from the replicas exceeds
+the page size, any excess is discarded. There cannot be excess results
+when a single partition is queried, the coordinator requests just
+one page worth of data from the replicas.</p>
+<p>At the beginning of each page the partition list is adjusted:</p>
+<ul class="simple">
+<li><p>Finished partitions are dropped.</p></li>
+<li><p>The partition slice of the currently read partition is adjusted, a
+special clustering range is added so that the read continues after the
+last clustering key.
+When a single partition is queried the list contains a single entry.</p></li>
+</ul>
+</section>
+<section id="range-scans">
+<h3>Range scans<a class="headerlink" href="#range-scans" title="Permalink to this headline">¶</a></h3>
+<p>The coordinator splits the partition range into sub-ranges that are
+localized to a single vnode. It then dispatches read requests for these
+sub-ranges to enough replicas to satisfy CL requirements. The reads
+start with a concurrency of 1, that is a single vnode is read at a time,
+exponentially increasing it if the results didn’t fill the page.</p>
+<p>On the replica the range is further split into sub-ranges that are
+localized to a single shard using
+<code class="docutils literal notranslate"><span class="pre">dht::ring_position_exponential_vector_sharder</span></code>. The sharder will start
+reading a single sub-range exponentially increasing concurrency (reading
+more and more shard-local sub ranges concurrently) until the page is
+filled. Each read is executed with <code class="docutils literal notranslate"><span class="pre">database::query_mutations()</span></code>. The
+results from these individual reads are then merged and sent back to the
+coordinator. Care is taken to only send to the coordinator the exact
+amount of data it requested. If the last round of read from the shards
+yielded so much data that the page is overflown any extra data is
+discarded.</p>
+<p>The coordinator merges results from all read requests. If there are too
+many results excess rows and/or partitions are discarded.</p>
+<p>At the beginning of each page, similarly to single partition queries, the
+partition range is adjusted:</p>
+<ul class="simple">
+<li><p>The lower bound of the range is set to the last partition of the last
+page.</p></li>
+<li><p>The partition slice of the currently read partition is adjusted, a
+special clustering range is added so that the read continues after the
+last clustering key.</p></li>
+</ul>
+</section>
+</section>
+<section id="stateful-queries">
+<h2>Stateful queries<a class="headerlink" href="#stateful-queries" title="Permalink to this headline">¶</a></h2>
+<p>Before, for paged queries we threw away all readers and any associated
+state accumulated during filling the page, and on the next page we
+created them from scratch again. Thus on each page we threw away a
+considerable amount of work, only to redo it again on the next page.
+This significantly increased latency and reduced throughput as from the
+point of view of a replica each page is as much work as a fresh query.</p>
+<p>The solution is to make queries stateful: instead of throwing away all
+state related to a query after filling the page on each replica, save
+this state in a cache and on the next page reuse it to continue the
+query where it was left off.</p>
+<section id="id1">
+<h3>Single partition queries<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<section id="the-querier">
+<h4>The querier<a class="headerlink" href="#the-querier" title="Permalink to this headline">¶</a></h4>
+<p>The essence of making queries stateful is saving the readers and any
+associated state on the replicas. To make this easy the reader and all
+associated objects that are necessary to serve a read on a shard are
+wrapped in a querier object which was designed to be suspendable and
+resumable, while offering a simple interface to client code.</p>
+</section>
+<section id="the-querier-cache">
+<h4>The querier cache<a class="headerlink" href="#the-querier-cache" title="Permalink to this headline">¶</a></h4>
+<p>Queriers are saved in a special-purpose cache. Queriers are not reusable
+across queries even for those reading from the same table. Different
+queries can have different restrictions, order, query time, etc.
+Validating all this to test whether a querier can be used for an
+arbitrary read request would be high-impossible and error-prone. To
+avoid all this each query has a unique identifier (the <code class="docutils literal notranslate"><span class="pre">query_uuid</span></code>).
+This identifier is used as the key to the cache under which the querier
+is saved.
+There is a querier cache object for each shard and it is stored in the
+database object of the respective shard.</p>
+</section>
+<section id="choosing-the-same-replicas">
+<h4>Choosing the same replicas<a class="headerlink" href="#choosing-the-same-replicas" title="Permalink to this headline">¶</a></h4>
+<p>In order for caching to work each page of a query has to be consistently
+read from the same replicas for the entire duration of the query.
+Otherwise the read might miss the querier cache and won’t be able to
+reuse the queriers from the previous page.
+To faciliate this the list of replicas used for each page is saved in
+the paging state and on the next page the same replicas will be
+preferred over other replicas.</p>
+</section>
+<section id="putting-it-all-together">
+<h4>Putting it all together<a class="headerlink" href="#putting-it-all-together" title="Permalink to this headline">¶</a></h4>
+<section id="coordinator">
+<h5>Coordinator<a class="headerlink" href="#coordinator" title="Permalink to this headline">¶</a></h5>
+<p>On the first page of the query the coordinator will generate a unique
+identifier for the query. This identifier will be transmitted to the
+replicas as part of the read request. The replicas will use this key to
+lookup saved queriers from the previous page and save them after filling
+the page. On the first page of the query no replicas will have any
+cached queriers. To avoid a pointless lookup but even more importantly
+to avoid introducing noise into the <a class="reference external" href="#diagnostics">diagnostic counters</a>
+a flag (<code class="docutils literal notranslate"><span class="pre">is_first_page</span></code>) is added to the read request. When this flag is
+set replicas will not attempt to lookup queriers from the previous page.</p>
+<p>At the end of each page, in addition to what was already saved, the
+coordinator saves in the paging state:</p>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">query_uuid</span></code>.</p></li>
+<li><p>The list of replicas used for the page (<code class="docutils literal notranslate"><span class="pre">last_replicas</span></code>).</p></li>
+<li><p>The <a class="reference external" href="#probabilistic-read-repair">read repair decision</a></p></li>
+</ul>
+</section>
+<section id="replica">
+<h5>Replica<a class="headerlink" href="#replica" title="Permalink to this headline">¶</a></h5>
+<p>At the start of each page, if <code class="docutils literal notranslate"><span class="pre">query_uuid</span></code> is set and <code class="docutils literal notranslate"><span class="pre">is_first_page</span></code> is
+<code class="docutils literal notranslate"><span class="pre">false</span></code> a lookup of the querier from the last page will be attempted. If
+this succeeds the querier will be removed from the cache and reused for
+continuing the read. If it fails a new one will be created and used for
+the remainder of the query.</p>
+<p>At the end of each page, if there is still data left (at least one of
+the page limits were reached) the querier is saved again in the cache.
+Note that since there is no way to know whether there is more data to be
+read without actually reading it the only way to determine whether the
+query is done is to look at whether the page is full. If the page is not
+full it means there wasn’t enough data to fill it and thus the query is
+done. On the other hand if the page is full there might be more data to
+read. This might result in an empty last page if there was just enough
+data to fill the previous page but not more.</p>
+</section>
+<section id="read-repair">
+<h5>Read repair<a class="headerlink" href="#read-repair" title="Permalink to this headline">¶</a></h5>
+<p>If the coordinator gets different results from the replicas (e.g.
+because one of the replicas missed a write for some reason) it
+reconciles them. This will result in some replicas having queriers with
+the wrong position on the next page. For example replicas that sent
+rows that are now dead (missed some deletes) will get a new page start
+position that is ahead of their saved querier’s while replicas that
+excluded some rows (missed some writes) will get a new page start
+position that is behind their saved querier’s.</p>
+<p>Since readers cannot be rewound to an earlier position the saved querier
+has to be discarded and a new one created on these replicas. To identify
+these cases on each cache lookup the position of the found querier is
+validated to match <em>exactly</em> the new page’s read start position. When a
+mismatch is detected the saved querier is dropped and a new one is
+created instead. Note that altough readers can technically be
+fast-forwarded to a later position all position mismatches are treated
+the same (querier is dropped) even if the reader could theoretically be
+fast-forwarded to the page start position. The reason for this is that
+using readers that could do that would results in significantly more
+complicated code and also reduced performance.</p>
+</section>
+<section id="discarded-results">
+<h5>Discarded results<a class="headerlink" href="#discarded-results" title="Permalink to this headline">¶</a></h5>
+<p>As already mentioned, in the case of IN queries a page may be
+over-filled as all partitions are read concurrently. In this case the
+coordinator will discard any extra rows to fit the results into the page
+limits. This poses a problem for cached queriers as those queriers,
+whose results were partly or fully discarded will receive a read request
+on the next page, with a start position that they already passed. The
+position validation introduced in <a class="reference external" href="#read-repair">read repair</a> will also
+catch these position mismatches and the saved querier will be dropped.</p>
+</section>
+<section id="schema-upgrades">
+<h5>Schema upgrades<a class="headerlink" href="#schema-upgrades" title="Permalink to this headline">¶</a></h5>
+<p>The schema of the read table can change between two pages. Dealing with
+this properly would be complicated and would not be worth the effort. So
+on lookup the schema versions are also checked and in case the cached
+querier’s schema version differs from that of the new page’s schema’s it
+is dropped and a new querier is created instead.</p>
+</section>
+<section id="concurrent-reads-against-the-same-shard-of-the-same-replica">
+<h5>Concurrent reads against the same shard of the same replica<a class="headerlink" href="#concurrent-reads-against-the-same-shard-of-the-same-replica" title="Permalink to this headline">¶</a></h5>
+<p>In the case of an IN query two listed partitions might be colocated on
+the same shard of the same replica. This will result in two concurrent
+read requests (reading different partitions) executing on said shard,
+both attempting to save and/or lookup queriers using the same
+<code class="docutils literal notranslate"><span class="pre">query_uuid</span></code>. This can result in the lookup finding a querier
+which is reading another partition. To avoid this, on lookup, the
+partition each found querier is reading is matched with that of the read
+request. In case when no matching querier is found a new querier is
+created as if the lookup missed.</p>
+</section>
+<section id="probabilistic-read-repair">
+<h5>Probabilistic read repair<a class="headerlink" href="#probabilistic-read-repair" title="Permalink to this headline">¶</a></h5>
+<p>On each page of a query there is a chance (user-changable property of
+the table) that a read-repair will be attempted. This hurts stateful
+queries as each page has a chance of using additional replicas in the
+query and on the next page not use some of them. This will result in
+cache misses when new replicas are involved and querier drops when these
+abandoned replicas will be attempted to be used again (the read position
+of the saved queriers that were neglected for some pages will not match
+the current one). To solve this problem we make the read repair decision
+apply to an entire query instead of a single page. Make it on the first
+page and stick to it for the entire duration of the query. The read
+repair decision is generated on the first page and saved in the paging
+state to be remembered for the duration of the query.</p>
+</section>
+<section id="cache-eviction">
+<h5>Cache eviction<a class="headerlink" href="#cache-eviction" title="Permalink to this headline">¶</a></h5>
+<section id="time-based">
+<h6>Time based<a class="headerlink" href="#time-based" title="Permalink to this headline">¶</a></h6>
+<p>Reads may be abandoned by the client or the coordinator may chose to use
+a different replica for the remainder of the query. To avoid abandoned
+queriers accumulating in the cache each cached querier has a TTL. After
+this expires it is evicted from the cache.</p>
+</section>
+<section id="resource-based">
+<h6>Resource based<a class="headerlink" href="#resource-based" title="Permalink to this headline">¶</a></h6>
+<p>The concurrency of reads executing on a given shard is limited to avoid
+unbounded resource usage. For this reason each reader needs to obtain a
+permit before it can start reading and holds on to this permit until it
+is destroyed. Suspended readers (those that are part of a cached querier
+object) also hold on to their permit and thus may prevent new readers
+from being admitted to read. Since new, active readers should be
+preferred over suspended ones, when there is a shortage of permits,
+queriers are evicted from the cache until enough permits are recovered
+to admit all new readers, or until the cache is empty. Queriers are
+evicted in LRU order.</p>
+</section>
+</section>
+</section>
+<section id="diagnostics">
+<h4>Diagnostics<a class="headerlink" href="#diagnostics" title="Permalink to this headline">¶</a></h4>
+<p>To observe the effectiveness of the caching, as well as aid in finding
+any problems a number of counters are added:</p>
+<ol class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">querier_cache_lookups</span></code> counts the total number of querier cache
+lookups. Not all page-fetches will result in a querier lookup. For
+example the first page of a query will not do a lookup as there was no
+previous page to reuse the querier from. The second, and all
+subsequent pages however should attempt to reuse the querier from the
+previous page.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">querier_cache_misses</span></code> counts the subset of (1) where the read have
+missed the querier cache (failed to find a saved querier with a
+read-range matching that of the page).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">querier_cache_drops</span></code> counts the subset of (1) where a saved querier
+was found with a matching read range but it cannot be used to continue
+the read for other reasons so it was dropped. This can happen for
+example if the querier was at the wrong position.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">querier_cache_time_based_evictions</span></code> counts the cached entries that
+were evicted due to their TTL expiring.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">querier_cache_resource_based_evictions</span></code> counts the cached entries
+that were evicted due to reader-resource (those limited by
+reader-concurrency limits) shortage.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">querier_cache_querier_population</span></code> is the current number of querier
+entries in the cache.</p></li>
+</ol>
+<p>Note:</p>
+<ul class="simple">
+<li><p>The count of cache hits can be derived from these counters as
+(1) - (2).</p></li>
+<li><p>A cache drop (3) also implies a cache hit (see above). This means that
+the number of actually reused queriers is: (1) - (2) - (3)</p></li>
+</ul>
+<p>Counters (2) to (6) are soft badness counters. They might be non-zero in
+a healthy cluster but high values or sudden spikes can indicate
+problems.</p>
+</section>
+</section>
+<section id="id2">
+<h3>Range scans<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>Stateful range scans are built on top of the infrastructure introduced
+for stateful single partition queries. That is, reads on replicas are
+done using a querier objects that are wrapping a reader which executes
+the actual read. This querier is then saved in a cache (<code class="docutils literal notranslate"><span class="pre">querier_cache</span></code>)
+at the end of the page and is reused on the next page. The major
+difference is that as opposed to single partition reads range scans read
+from all shards on a replica.</p>
+<section id="multishard-combining-reader">
+<h4>multishard_combining_reader<a class="headerlink" href="#multishard-combining-reader" title="Permalink to this headline">¶</a></h4>
+<p>Using the querier mandates using a <code class="docutils literal notranslate"><span class="pre">flat_mutation_reader</span></code>. Range scans
+used an open-coded algorithm on the replica for the read. As already
+explained in <a class="reference external" href="#range-scans">the introduction</a> this algorithm
+uses several calls to <code class="docutils literal notranslate"><span class="pre">database::query_muations()</span></code> to the remote shards
+then merging the produced <code class="docutils literal notranslate"><span class="pre">reconcilable_result</span></code>. This algoritm did not
+lend itself for being wrapped in a <code class="docutils literal notranslate"><span class="pre">flat_mutation_reader</span></code> so a new,
+suitable one was written from scratch. This is
+<code class="docutils literal notranslate"><span class="pre">multishard_combining_reader</span></code>. In addition to implementing a
+multishard-reading algorithm that is suspendable, an effort was made to
+solve some of the weak points of the previous open-coded implementation,
+mainly cold start and result merging.</p>
+</section>
+<section id="query-mutations-on-all-shards">
+<h4>query_mutations_on_all_shards()<a class="headerlink" href="#query-mutations-on-all-shards" title="Permalink to this headline">¶</a></h4>
+<p>Implementing a stateful range scan using <code class="docutils literal notranslate"><span class="pre">multishard_combining_reader</span></code>,
+<code class="docutils literal notranslate"><span class="pre">querier</span></code> and <code class="docutils literal notranslate"><span class="pre">querier_cache</span></code> still has a lot of involved details to
+it. To make this as accessible and resuable as possible a function was
+added that takes care of all this, offering a simple interface to
+clients. This is <code class="docutils literal notranslate"><span class="pre">query_mutations_on_all_shards()</span></code>, which takes care of
+all details related to replica local range scans. It supports both
+stateful and stateless queries transparently.</p>
+</section>
+<section id="suspending-and-resuming-the-multishard-combining-reader">
+<h4>Suspending and resuming the multishard_combining_reader<a class="headerlink" href="#suspending-and-resuming-the-multishard-combining-reader" title="Permalink to this headline">¶</a></h4>
+<p>Saving the <code class="docutils literal notranslate"><span class="pre">multishard_combining_reader</span></code> in a querier would be the
+natural choice for saving the query state. This however would create
+some serious problems:</p>
+<ul class="simple">
+<li><p>It is not enough to just save the <code class="docutils literal notranslate"><span class="pre">multishard_combining_reader</span></code> reader
+in a querier. All the shard readers have to be saved on their home
+shard and made individually evictable as well but this has to be
+transparent to the multishard reader which, being a plain
+<code class="docutils literal notranslate"><span class="pre">flat_mutation_reader</span></code>, has no way to be told that the query is
+“suspended” and later “resumed” and thus could not do the
+save/lookup/recreate itself.</p></li>
+<li><p>It mandates the consistent usage of the same shard throughout all the
+pages of the query. This is problematic for load balancing.</p></li>
+<li><p>The querier wrapping the <code class="docutils literal notranslate"><span class="pre">multishard_combining_reader</span></code> would be a
+single point of failure for the entire query. If evicted the entire
+saved state (all shard readers) would have to be dropped as well.</p></li>
+</ul>
+<p>While some of these issues could be worked around and others could be
+lived with, overall they make this option unfeasable.</p>
+<p>An alternative but less natural option is to “dismantle” the multishard
+reader, that is remove and take ownership of all its shard readers and
+move any fragments that were popped from a shard reader but not
+consumed (included in the results) back to their originating shard
+reader, so that only the shard readers need to be saved and resumed. In
+other words move all state required to suspend/resume the query into the
+shard readers.</p>
+<p>This option addresses all the problems the “natural” option has:</p>
+<ul class="simple">
+<li><p>All shard readers are independently evictable.</p></li>
+<li><p>No coordinator shard is needed, each page request can be executed on
+any shard.</p></li>
+<li><p>Evicting a shard reader has no effect on the remaining ones.</p></li>
+</ul>
+<p>Of course it also has it own problems:</p>
+<ul class="simple">
+<li><p>On each page a certain amount of work is undone by moving some
+fragments back to their original readers.</p></li>
+<li><p>The concurrency state of the multishard reader is lost and it has to
+start from 1 on the next page.</p></li>
+</ul>
+<p>But these problems are much more manageable and some (for example the
+last) can be worked around if found to be a real problem.</p>
+</section>
+<section id="id3">
+<h4>Putting it all together<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<section id="id4">
+<h5>Coordinator<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h5>
+<p>In principle the same as that for <a class="reference external" href="#coordinator">single partition queries</a>.</p>
+</section>
+<section id="id5">
+<h5>Replica<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h5>
+<p>The storage proxy can now simply call
+<a class="reference external" href="#query_mutations_on_all_shards">query_mutations_on_all_shards()</a> with
+the appropriate parameters which takes care of executing the read,
+including saving and reusing the shard readers.</p>
+</section>
+</section>
+<section id="id6">
+<h4>Diagnostics<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h4>
+<p>Additional counters are added to detect possible problems with stateful
+range scans:</p>
+<ol class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">multishard_query_unpopped_fragments</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">multishard_query_unpopped_bytes</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">multishard_query_failed_reader_stops</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">multishard_query_failed_reader_saves</span></code></p></li>
+</ol>
+<p>(1) and (2) track the amount of data pushed back to shard readers while
+<a class="reference external" href="#suspending-and-resuming-the-multishard_combining_reader">dismantling</a>
+the multishard reader. These are soft badness counters, they will not be
+zero in a normally operating cluster, however sudden spikes in their
+values can indicate problems.
+(3) tracks the number of times stopping any of the shard readers failed.
+Shard readers are said to be stopped when the page is filled, that is
+any pending read-ahead is waited upon. Since saving a reader will not
+fail the read itself these failures will normally go undetected. To
+avoid hiding any bug or problem due to this, track these background
+failures using this counters. This counter is a hard badness counter,
+that is it should <em>always</em> be zero. Any other value indicates problems
+in the respective shard/node.
+(4) tracks the number of times saving the reader failed. This only
+includes preparing the querier object and inserting it into the querier
+cache. Like (3) this is a hard badness counter.</p>
+</section>
+</section>
+</section>
+<section id="future-work">
+<h2>Future work<a class="headerlink" href="#future-work" title="Permalink to this headline">¶</a></h2>
+<p>Since the protocol specifications allows for over or underfilling a
+page in the future we might get rid of discarding results on the
+coordinator to free ourselves from all the <a class="reference external" href="#discarded-results">problems</a>
+it causes.</p>
+<p>The present state optimizes for range scans on huge tables, where the
+page is filled from a single shard of a single vnode. Further
+optimizations are possible for scans on smaller tables, that have to
+cross shards or even vnodes to fill the page. One obvious candidate is
+saving and restoring the current concurrency on the coordinator (how
+many vnodes have to be read concurrently) and on the replica (how many
+shards we should read-ahead on).</p>
+</section>
+<section id="further-reading">
+<h2>Further reading<a class="headerlink" href="#further-reading" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/scylladb/scylla/blob/master/querier.hh">querier.hh</a> <code class="docutils literal notranslate"><span class="pre">querier</span></code> and <code class="docutils literal notranslate"><span class="pre">querier_cache</span></code>.</p></li>
+<li><p><a class="reference external" href="https://github.com/scylladb/scylla/blob/master/multishard_mutation_query.hh">multishard_mutation_query.hh</a>
+<code class="docutils literal notranslate"><span class="pre">query_mutations_on_all_shards()</span></code>.</p></li>
+<li><p><a class="reference external" href="https://github.com/scylladb/scylla/blob/master/mutation_reader.hh">mutation_reader.hh</a>
+<code class="docutils literal notranslate"><span class="pre">multishard_combining_reader</span></code>.</p></li>
+</ul>
+</section>
+</section>
+
+        </div>
+
+        <div id="sidebar" class="large-3 large-pull-6 columns"><div class="side-nav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Scylla Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../alternator/alternator.html">Alternator: DynamoDB API in Scylla</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Design Notes</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="IDL.html">IDL definition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdc.html">CDC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compaction_controller.html">The Compaction Controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cql-extensions.html">Scylla CQL extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cql-extensions-internal.html">Scylla CQL extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cql3-type-mapping.html">CQL3 Type Mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hinted_handoff_design.html">Hinted Handoff Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="isolation.html">Performance Isolation in Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lua-type-mapping.html">CQL to Lua type mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Scylla Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migrating-from-users-to-roles.html">Migrating from users to roles</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Paged queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="protocol-extensions.html">Protocol extensions to the Cassandra Native Protocol</a></li>
+<li class="toctree-l2"><a class="reference internal" href="protocols.html">Ports and protocols in Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="redis.html">Redis API in Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="repair_based_node_ops.html">Repair based node operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="row_cache.html">Row Cache</a></li>
+<li class="toctree-l2"><a class="reference internal" href="row_level_repair.html">Row level repair</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secondary_index.html">Secondary indexes in Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sstable-scylla-format.html">File format of the Scylla.db sstable component</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sstables-directory-structure.html">sstables directory structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system_keyspace.html">System keyspace layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system_schema_keyspace.html">System schema keyspace layout</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/index.html">Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/index.html">Contribute</a></li>
+</ul>
+
+</div>
+        </div>
+
+        <div class="large-3 columns">
+            
+                <div class="scylla-dropdown single-version">
+    <a href="#" data-options="align:bottom" data-dropdown="drop-versions" class="scylla-dropdown__button">
+        
+            master
+        
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-versions" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+            
+              <li><a href="paged-queries.html">master</a></li>
+            
+    </ul>
+</div>
+            
+        </div>
+
+    </div>
+</section>
+
+<!-- newsleter modal -->
+
+<div id="newsletter_signup" class="reveal-modal tiny radius dark_modal" data-reveal aria-labelledby="modalTitle" aria-hidden="true" role="dialog">
+    <a class="close-reveal-modal" aria-label="Close">×</a>
+    <h2 id="modalTitle">Sign up for the Scylla newsletter</h2>
+    <div id="mc_embed_signup">
+        <form action="//cloudius-systems.us10.list-manage.com/subscribe/post?u=df8bb543c68230d5f7b4dcf78&amp;id=9a4589f144" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate="">
+            <div id="mc_embed_signup_scroll">
+
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-EMAIL">Email</label></div>
+                        <div class="small-9 columns"><input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-FNAME">First Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="FNAME" class="" id="mce-FNAME"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-LNAME">Last Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="LNAME" class="" id="mce-LNAME"></div>
+                    </div>
+                </div>
+                <div id="mce-responses" class="clear">
+                    <div class="response" id="mce-error-response" style="display:none"></div>
+                    <div class="response" id="mce-success-response" style="display:none"></div>
+                </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                <div style="position: absolute; left: -5000px;"><input type="text" name="b_df8bb543c68230d5f7b4dcf78_9a4589f144" tabindex="-1" value=""></div>
+                <div class="clear"><input type="submit" class="button" value="Sign up" name="subscribe" id="mc-embedded-subscribe"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- end newsleter modal -->
+
+
+
+<!-- footer.html -->
+<footer id="footer">
+    <div class="footer-top">
+        <a class="logo" href="https://www.scylladb.com"><img src="../_static/img/logo-scylla-horizontal-RGB.svg" alt=""></a>
+        <div class="footer-links">
+            <a class="link" href="https://docs.scylladb.com">Docs</a>
+            <a class="link" href="https://www.scylladb.com/company/contact-us/">Contact Us</a>
+            <a class="link" href="https://www.scylladb.com/company/">About Us</a>
+          <div class="scylla-dropdown">
+    <a href="#" data-options="align:top" data-dropdown="drop-contribute" class="scylla-dropdown__button">
+        Contribute 
+        <i class="fa fa-github" aria-hidden="true"></i>
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-contribute" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+        <li><a href="https://github.com/scylladb/scylla/issues/new?title=Issue in page Paged queries&&body=I%20would%20like%20to%20report%20an%20issue%20in%20page%20https://scylla.docs.scylladb.com/master/design-notes/paged-queries%0A%0A%23%23%23%20Problem%0A%0A%23%23%23%20%20Suggest%20a%20fix" target="_blank">Report a doc issue <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+        <li><a href="https://docs.scylladb.com/contribute/" target="_blank">Learn how to contribute <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+    </ul>
+</div>
+        </div>
+        <div class="footer-actions">
+            <a class="link-icon" href="https://github.com/ScyllaDB" target="_blank">
+                <span class="icon-github2"></span></a>
+            <a class="link-icon" href="https://twitter.com/ScyllaDB" target="_blank">
+                <span class="icon-twitter"></span></a>
+            <a class="link-icon" href="https://www.linkedin.com/company/scylladb"  target="_blank">
+                <span class="icon-linkedin2"></span></a>
+            <a class="link-icon" href="https://www.facebook.com/scylladb/" target="_blank">
+                <span class="icon-facebook"></span></a>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <div class="footer-info">
+            <div class="footer-copyright">
+                &#169; 2021, ScyllaDB. All rights reserved.
+            </div>
+            <div class="footer-last-updated">
+                Last updated on 20 July 2021.
+            </div>
+            <div class="footer-version">
+                Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+                &amp; <a href="https://sphinx-theme.scylladb.com">ScyllaDB Theme 0.1.25</a>
+            </div>
+        </div>
+        <div class="footer-links">
+        </div>
+    </div>
+</footer>
+<!-- end footer.html -->
+
+<!-- bodyscripts.html -->
+<!-- at the end of the BODY --> 
+<script src="../_static/js/vendor/jquery.js"></script>
+<script src="../_static/js/vendor/jquery.cookie.min.js"></script>
+<script src="../_static/expertrec.js"></script>
+<script src="../_static/js/foundation/foundation.js"></script>
+<script src="../_static/js/foundation/foundation.topbar.js"></script>
+<script src="../_static/js/foundation/foundation.dropdown.js"></script>
+<script src="../_static/app.js"></script>
+<script>
+    $(document).foundation();
+</script>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T8P2JP"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+  <!-- end bodyscripts.html -->
+</body>
+</html>

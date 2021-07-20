@@ -1,0 +1,662 @@
+
+
+
+<!doctype html>
+<html class="no-js" lang="en">
+  
+<head><!-- begin head.html -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>
+    Docker Hub Image | Scylla Docs
+    </title>
+    <meta name="description" content="Scylla is an Apache Cassandra-compatible NoSQL data store that can handle 1 million transactions per second on a single server."/>
+
+    <link rel="icon" href="../_static/img/favicon.ico" type="image/x-icon"/>
+    <link rel="canonical" href="https://docs.scylladb.com/">
+    <link rel="author" href="mailto:info@scylladb.com">
+    <link rel="stylesheet" href="../_static/" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/segment.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/menu.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/tab.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/tabs.css" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/css/doc/main.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css"/>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+
+    <script src="../_static/js/vendor/modernizr.js"></script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-T8P2JP');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Marketo -->
+    <script type="text/javascript"> (function() { var didInit = false; function initMunchkin() { if(didInit === false) { didInit = true; Munchkin.init('791-QBF-350'); } } var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//munchkin.marketo.net/munchkin.js'; s.onreadystatechange = function() { if (this.readyState == 'complete' || this.readyState == 'loaded') { initMunchkin(); } }; s.onload = initMunchkin; document.getElementsByTagName('head')[0].appendChild(s); })(); </script>
+    <!-- End Marketo -->
+
+<!-- end head.html -->
+</head>
+
+<body>
+
+
+
+<header id="header" class="animated">
+    <div class="topbar_continer contain-to-grid clearfix">
+        <nav class="top-bar" id="top-bar" data-topbar role="navigation">
+            <ul class="title-area">
+                <li class="name">
+                    <div class="logo">
+                        <a href="https://docs.scylladb.com/"><img src="../_static/img/logo-scylla-docs.svg" alt="" width="151"></a>
+                    </div>
+                </li>
+                <li class="toggle-topbar"><a href="#"><span class="icon-manu"></span></a></li>
+            </ul>
+            <section class="top-bar-section clearfix">
+                <ul class="right">
+                    
+                    <li>
+                        <a href="https://scylla.docs.scylladb.com">Scylla Developer Notes</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://university.scylladb.com/">Scylla University</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://www.scylladb.com/">ScyllaDB Home</a>
+                    </li>
+                    
+                    <li class="search_continer show-for-medium-up">	
+                        <ci-search></ci-search>	
+                    </li>	
+                </ul>
+            </section>
+        </nav>
+    </div>
+</header>
+<section id="content">
+    <div class="row">
+	
+	<div class="large-6 large-push-3 columns">
+
+        
+
+        <section id="docker-hub-image">
+<h1>Docker Hub Image<a class="headerlink" href="#docker-hub-image" title="Permalink to this headline">¶</a></h1>
+<section id="what-is-scylladb">
+<h2>What is ScyllaDB ?<a class="headerlink" href="#what-is-scylladb" title="Permalink to this headline">¶</a></h2>
+<p>ScyllaDB is a high-performance NoSQL database system, fully compatible with Apache Cassandra.
+ScyllaDB is released under the GNU Affero General Public License version 3 and the Apache License, ScyllaDB is free and open-source software.</p>
+<blockquote>
+<div><p><a class="reference external" href="http://www.scylladb.com/">ScyllaDB</a></p>
+</div></blockquote>
+<p><img alt="http://www.scylladb.com/wp-content/uploads/mascot_medium.png" src="http://www.scylladb.com/wp-content/uploads/mascot_medium.png" />logo</p>
+</section>
+<section id="quick-start">
+<h2>Quick start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h2>
+<p>To startup a Scylla single-node cluster in developer mode execute:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla --hostname some-scylla -d scylladb/scylla --smp <span class="m">1</span>
+</pre></div>
+</div>
+<p>This command will start a Scylla single-node cluster in developer mode
+(see <code class="docutils literal notranslate"><span class="pre">--developer-mode</span> <span class="pre">1</span></code>) limited by a single CPU core (see <code class="docutils literal notranslate"><span class="pre">--smp</span></code>).
+Production grade configuration requires tuning a few kernel parameters
+such that limiting number of available cores (with <code class="docutils literal notranslate"><span class="pre">--smp</span> <span class="pre">1</span></code>) is
+the simplest way to go.</p>
+<p>Multiple cores requires setting a proper value to the <code class="docutils literal notranslate"><span class="pre">/proc/sys/fs/aio-max-nr</span></code>.
+On many non production systems it will be equal to 65K. The formula
+to calculate proper value is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Available</span> <span class="n">AIO</span> <span class="n">on</span> <span class="n">the</span> <span class="n">system</span> <span class="o">-</span> <span class="p">(</span><span class="n">request</span> <span class="n">AIO</span> <span class="n">per</span><span class="o">-</span><span class="n">cpu</span> <span class="o">*</span> <span class="n">ncpus</span><span class="p">)</span> <span class="o">=</span>
+<span class="n">aio_max_nr</span> <span class="o">-</span> <span class="n">aio_nr</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">reactor</span><span class="p">::</span><span class="n">max_aio</span> <span class="o">+</span> <span class="n">detect_aio_poll</span> <span class="o">+</span> <span class="n">reactor_backend_aio</span><span class="p">::</span><span class="n">max_polls</span><span class="p">)</span> <span class="o">*</span> <span class="n">cpu_cores</span> <span class="o">=</span>
+<span class="n">aio_max_nr</span> <span class="o">-</span> <span class="n">aio_nr</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">10000</span><span class="p">)</span> <span class="o">*</span> <span class="n">cpu_cores</span> <span class="o">=</span>
+<span class="n">aio_max_nr</span> <span class="o">-</span> <span class="n">aio_nr</span> <span class="o">&lt;</span> <span class="mi">11026</span> <span class="o">*</span> <span class="n">cpu_cores</span>
+
+<span class="n">where</span>
+
+<span class="n">reactor</span><span class="p">::</span><span class="n">max_aio</span> <span class="o">=</span> <span class="n">max_aio_per_queue</span> <span class="o">*</span> <span class="n">max_queues</span><span class="p">,</span>
+<span class="n">max_aio_per_queue</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+<span class="n">max_queues</span> <span class="o">=</span> <span class="mf">8.</span>
+</pre></div>
+</div>
+</section>
+<section id="how-to-use-this-image">
+<h2>How to use this image<a class="headerlink" href="#how-to-use-this-image" title="Permalink to this headline">¶</a></h2>
+<section id="start-a-scylla-server-instance">
+<h3>Start a <code class="docutils literal notranslate"><span class="pre">scylla</span></code> server instance<a class="headerlink" href="#start-a-scylla-server-instance" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla --hostname some-scylla -d scylladb/scylla
+</pre></div>
+</div>
+</section>
+<section id="run-nodetool-utility">
+<h3>Run <code class="docutils literal notranslate"><span class="pre">nodetool</span></code> utility<a class="headerlink" href="#run-nodetool-utility" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker <span class="nb">exec</span> -it some-scylla nodetool status
+<span class="go">Datacenter: datacenter1</span>
+<span class="go">=======================</span>
+<span class="go">Status=Up/Down</span>
+<span class="go">|/ State=Normal/Leaving/Joining/Moving</span>
+<span class="go">--  Address     Load       Tokens  Owns (effective)  Host ID                               Rack</span>
+<span class="go">UN  172.17.0.2  125.51 KB  256     100.0%            c9155121-786d-44f8-8667-a8b915b95665  rack1</span>
+</pre></div>
+</div>
+</section>
+<section id="run-cqlsh-utility">
+<h3>Run <code class="docutils literal notranslate"><span class="pre">cqlsh</span></code> utility<a class="headerlink" href="#run-cqlsh-utility" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker <span class="nb">exec</span> -it some-scylla cqlsh
+<span class="go">Connected to Test Cluster at 172.17.0.2:9042.</span>
+<span class="go">[cqlsh 5.0.1 | Cassandra 2.1.8 | CQL spec 3.2.1 | Native protocol v3]</span>
+<span class="go">Use HELP for help.</span>
+<span class="go">cqlsh&gt;</span>
+</pre></div>
+</div>
+</section>
+<section id="make-a-cluster">
+<h3>Make a cluster<a class="headerlink" href="#make-a-cluster" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla2  --hostname some-scylla2 -d scylladb/scylla --seeds<span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>docker inspect --format<span class="o">=</span><span class="s1">&#39;{{ .NetworkSettings.IPAddress }}&#39;</span> some-scylla<span class="k">)</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<section id="make-a-cluster-with-docker-compose">
+<h4>Make a cluster with Docker Compose<a class="headerlink" href="#make-a-cluster-with-docker-compose" title="Permalink to this headline">¶</a></h4>
+<p>First, create a <code class="docutils literal notranslate"><span class="pre">docker-compose.yml</span></code> file with the following contents:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">version</span><span class="p p-Indicator">:</span> <span class="s">&#39;3&#39;</span>
+
+<span class="l l-Scalar l-Scalar-Plain">services</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">some-scylla</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">image</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">scylladb/scylla</span>
+    <span class="l l-Scalar l-Scalar-Plain">container_name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">some-scylla</span>
+
+  <span class="l l-Scalar l-Scalar-Plain">some-scylla2</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">image</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">scylladb/scylla</span>
+    <span class="l l-Scalar l-Scalar-Plain">container_name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">some-scylla2</span>
+    <span class="l l-Scalar l-Scalar-Plain">command</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">--seeds=some-scylla</span>
+
+  <span class="l l-Scalar l-Scalar-Plain">some-scylla3</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">image</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">scylladb/scylla</span>
+    <span class="l l-Scalar l-Scalar-Plain">container_name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">some-scylla3</span>
+    <span class="l l-Scalar l-Scalar-Plain">command</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">--seeds=some-scylla</span>
+</pre></div>
+</div>
+<p>Then, launch the 3-node cluster as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span><span class="o">-</span><span class="n">compose</span> <span class="n">up</span> <span class="o">-</span><span class="n">d</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="check-scylla-logs">
+<h3>Check <code class="docutils literal notranslate"><span class="pre">scylla</span></code> logs<a class="headerlink" href="#check-scylla-logs" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker logs some-scylla <span class="p">|</span> tail
+<span class="go">INFO  2016-08-04 06:57:40,836 [shard 5] database - Setting compaction strategy of system_traces.events to SizeTieredCompactionStrategy</span>
+<span class="go">INFO  2016-08-04 06:57:40,836 [shard 3] database - Setting compaction strategy of system_traces.events to SizeTieredCompactionStrategy</span>
+<span class="go">INFO  2016-08-04 06:57:40,836 [shard 1] database - Setting compaction strategy of system_traces.events to SizeTieredCompactionStrategy</span>
+<span class="go">INFO  2016-08-04 06:57:40,836 [shard 2] database - Setting compaction strategy of system_traces.events to SizeTieredCompactionStrategy</span>
+<span class="go">INFO  2016-08-04 06:57:40,836 [shard 4] database - Setting compaction strategy of system_traces.events to SizeTieredCompactionStrategy</span>
+<span class="go">INFO  2016-08-04 06:57:40,836 [shard 7] database - Setting compaction strategy of system_traces.events to SizeTieredCompactionStrategy</span>
+<span class="go">INFO  2016-08-04 06:57:40,837 [shard 6] database - Setting compaction strategy of system_traces.events to SizeTieredCompactionStrategy</span>
+<span class="go">INFO  2016-08-04 06:57:40,839 [shard 0] database - Schema version changed to fea14d93-9c5a-34f5-9d0e-2e49dcfa747e</span>
+<span class="go">INFO  2016-08-04 06:57:40,839 [shard 0] storage_service - Starting listening for CQL clients on 172.17.0.2:9042...</span>
+<span class="go">INFO  2016-08-04 06:57:40,840 [shard 0] storage_service - Thrift server listening on 172.17.0.2:9160 ...</span>
+</pre></div>
+</div>
+</section>
+<section id="configuring-data-volume-for-storage">
+<h3>Configuring data volume for storage<a class="headerlink" href="#configuring-data-volume-for-storage" title="Permalink to this headline">¶</a></h3>
+<p>You can use Docker volumes to improve performance of Scylla.</p>
+<p>Create a Scylla data directory <code class="docutils literal notranslate"><span class="pre">/var/lib/scylla</span></code> on the host, which is used by Scylla container to store all data:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> sudo mkdir -p /var/lib/scylla/data /var/lib/scylla/commitlog /var/lib/scylla/hints /var/lib/scylla/view_hints
+</pre></div>
+</div>
+<p>Launch Scylla using Docker’s <code class="docutils literal notranslate"><span class="pre">--volume</span></code> command line option to mount the created host directory as a data volume in the container and disable Scylla’s developer mode to run I/O tuning before starting up the Scylla node.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla --volume /var/lib/scylla:/var/lib/scylla -d scylladb/scylla --developer-mode<span class="o">=</span><span class="m">0</span>
+</pre></div>
+</div>
+</section>
+<section id="configuring-resource-limits">
+<h3>Configuring resource limits<a class="headerlink" href="#configuring-resource-limits" title="Permalink to this headline">¶</a></h3>
+<p>The Scylla docker image defaults to running on overprovisioned mode and won’t apply any CPU pinning optimizations, which it normally does in non-containerized environments.
+For better performance, it is recommended to configure resource limits for your Docker container using the <code class="docutils literal notranslate"><span class="pre">--smp</span></code>, <code class="docutils literal notranslate"><span class="pre">--memory</span></code>, and <code class="docutils literal notranslate"><span class="pre">--cpuset</span></code> command line options, as well as
+disabling the overprovisioned flag as documented in the section “Command-line options”.</p>
+</section>
+<section id="restart-scylla">
+<h3>Restart Scylla<a class="headerlink" href="#restart-scylla" title="Permalink to this headline">¶</a></h3>
+<p>The Docker image uses supervisord to manage Scylla processes. You can restart Scylla in a Docker container using</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">exec</span> <span class="o">-</span><span class="n">it</span> <span class="n">some</span><span class="o">-</span><span class="n">scylla</span> <span class="n">supervisorctl</span> <span class="n">restart</span> <span class="n">scylla</span>
+</pre></div>
+</div>
+</section>
+<section id="command-line-options">
+<h3>Command-line options<a class="headerlink" href="#command-line-options" title="Permalink to this headline">¶</a></h3>
+<p>The Scylla image supports many command line options that are passed to the <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">run</span></code> command.</p>
+<section id="seeds-seeds">
+<h4><code class="docutils literal notranslate"><span class="pre">--seeds</span> <span class="pre">SEEDS</span></code><a class="headerlink" href="#seeds-seeds" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">-seeds</span></code> command line option configures Scylla’s seed nodes.
+If no <code class="docutils literal notranslate"><span class="pre">--seeds</span></code> option is specified, Scylla uses its own IP address as the seed.</p>
+<p>For example, to configure Scylla to run with two seed nodes <code class="docutils literal notranslate"><span class="pre">192.168.0.100</span></code> and <code class="docutils literal notranslate"><span class="pre">192.168.0.200</span></code>.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --seeds <span class="m">192</span>.168.0.100,192.168.0.200
+</pre></div>
+</div>
+</section>
+<section id="listen-address-addr">
+<h4><code class="docutils literal notranslate"><span class="pre">--listen-address</span> <span class="pre">ADDR</span></code><a class="headerlink" href="#listen-address-addr" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--listen-address</span></code> command line option configures the IP address the Scylla instance listens on for connections from other Scylla nodes.</p>
+<p>For example, to configure Scylla to use listen address <code class="docutils literal notranslate"><span class="pre">10.0.0.5</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --listen-address <span class="m">10</span>.0.0.5
+</pre></div>
+</div>
+<p><strong>Since: 1.4</strong></p>
+</section>
+<section id="alternator-address-addr">
+<h4><code class="docutils literal notranslate"><span class="pre">--alternator-address</span> <span class="pre">ADDR</span></code><a class="headerlink" href="#alternator-address-addr" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--alternator-address</span></code> command line option configures the Alternator API listen address. The default value is the same as <code class="docutils literal notranslate"><span class="pre">--listen-address</span></code>.</p>
+<p><strong>Since: 3.2</strong></p>
+</section>
+<section id="alternator-port-port">
+<h4><code class="docutils literal notranslate"><span class="pre">--alternator-port</span> <span class="pre">PORT</span></code><a class="headerlink" href="#alternator-port-port" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--alternator-port</span></code> command line option configures the Alternator API listen port. The Alternator API is disabled by default. You need to specify the port to enable it.</p>
+<p>For example, to configure Scylla to listen to Alternator API at port <code class="docutils literal notranslate"><span class="pre">8000</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --alternator-port <span class="m">8000</span>
+</pre></div>
+</div>
+<p><strong>Since: 3.2</strong></p>
+</section>
+<section id="alternator-https-port-port">
+<h4><code class="docutils literal notranslate"><span class="pre">--alternator-https-port</span> <span class="pre">PORT</span></code><a class="headerlink" href="#alternator-https-port-port" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--alternator-https-port</span></code> option is similar to <code class="docutils literal notranslate"><span class="pre">--alternator-port</span></code>, just enables an encrypted (HTTPS) port. Either the <code class="docutils literal notranslate"><span class="pre">--alternator-https-port</span></code> or <code class="docutils literal notranslate"><span class="pre">--alternator-http-port</span></code>, or both, can be used to enable Alternator.</p>
+<p>Note that the <code class="docutils literal notranslate"><span class="pre">--alternator-https-port</span></code> option also requires that files <code class="docutils literal notranslate"><span class="pre">/etc/scylla/scylla.crt</span></code> and <code class="docutils literal notranslate"><span class="pre">/etc/scylla/scylla.key</span></code> be inserted into the image. These files contain an SSL certificate and key, respectively.</p>
+<p><strong>Since: 4.2</strong></p>
+</section>
+<section id="alternator-write-isolation-policy">
+<h4><code class="docutils literal notranslate"><span class="pre">--alternator-write-isolation</span> <span class="pre">policy</span></code><a class="headerlink" href="#alternator-write-isolation-policy" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--alternator-write-isolation</span></code> command line option chooses between four allowed write isolation policies described in docs/alternator/alternator.md. This option must be specified if Alternator is enabled - it does not have a default.</p>
+<p><strong>Since: 4.1</strong></p>
+</section>
+<section id="broadcast-address-addr">
+<h4><code class="docutils literal notranslate"><span class="pre">--broadcast-address</span> <span class="pre">ADDR</span></code><a class="headerlink" href="#broadcast-address-addr" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--broadcast-address</span></code> command line option configures the IP address the Scylla instance tells other Scylla nodes in the cluster to connect to.</p>
+<p>For example, to configure Scylla to use broadcast address <code class="docutils literal notranslate"><span class="pre">10.0.0.5</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --broadcast-address <span class="m">10</span>.0.0.5
+</pre></div>
+</div>
+</section>
+<section id="broadcast-rpc-address-addr">
+<h4><code class="docutils literal notranslate"><span class="pre">--broadcast-rpc-address</span> <span class="pre">ADDR</span></code><a class="headerlink" href="#broadcast-rpc-address-addr" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--broadcast-rpc-address</span></code> command line option configures the IP address the Scylla instance tells clients to connect to.</p>
+<p>For example, to configure Scylla to use broadcast RPC address <code class="docutils literal notranslate"><span class="pre">10.0.0.5</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --broadcast-rpc-address <span class="m">10</span>.0.0.5
+</pre></div>
+</div>
+</section>
+<section id="smp-count">
+<h4><code class="docutils literal notranslate"><span class="pre">--smp</span> <span class="pre">COUNT</span></code><a class="headerlink" href="#smp-count" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--smp</span></code> command line option restricts Scylla to <code class="docutils literal notranslate"><span class="pre">COUNT</span></code> number of CPUs.
+The option does not, however, mandate a specific placement of CPUs.
+See the <code class="docutils literal notranslate"><span class="pre">--cpuset</span></code> command line option if you need Scylla to run on specific CPUs.</p>
+<p>For example, to restrict Scylla to 2 CPUs:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --smp <span class="m">2</span>
+</pre></div>
+</div>
+</section>
+<section id="memory-amount">
+<h4><code class="docutils literal notranslate"><span class="pre">--memory</span> <span class="pre">AMOUNT</span></code><a class="headerlink" href="#memory-amount" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--memory</span></code> command line option restricts Scylla to use up to <code class="docutils literal notranslate"><span class="pre">AMOUNT</span></code> of memory.
+The <code class="docutils literal notranslate"><span class="pre">AMOUNT</span></code> value supports both <code class="docutils literal notranslate"><span class="pre">M</span></code> unit for megabytes and <code class="docutils literal notranslate"><span class="pre">G</span></code> unit for gigabytes.</p>
+<p>For example, to restrict Scylla to 4 GB of memory:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --memory 4G
+</pre></div>
+</div>
+</section>
+<section id="reserve-memory-amount">
+<h4><code class="docutils literal notranslate"><span class="pre">--reserve-memory</span> <span class="pre">AMOUNT</span></code><a class="headerlink" href="#reserve-memory-amount" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--reserve-memory</span></code> command line option configures Scylla to reserve the <code class="docutils literal notranslate"><span class="pre">AMOUNT</span></code> of memory to the OS.
+The <code class="docutils literal notranslate"><span class="pre">AMOUNT</span></code> value supports both <code class="docutils literal notranslate"><span class="pre">M</span></code> unit for megabytes and <code class="docutils literal notranslate"><span class="pre">G</span></code> unit for gigabytes.</p>
+<p>For example, to reserve 4 GB of memory to the OS:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --reserve-memory 4G
+</pre></div>
+</div>
+</section>
+<section id="overprovisioned-enable">
+<h4><code class="docutils literal notranslate"><span class="pre">--overprovisioned</span> <span class="pre">ENABLE</span></code><a class="headerlink" href="#overprovisioned-enable" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--overprovisioned</span></code> command line option enables or disables optimizations for running Scylla in an overprovisioned environment.
+If no <code class="docutils literal notranslate"><span class="pre">--overprovisioned</span></code> option is specified, Scylla defaults to running with optimizations <em>enabled</em>. If <code class="docutils literal notranslate"><span class="pre">--overprovisioned</span></code> is
+not specified and is left at its default, specifying <code class="docutils literal notranslate"><span class="pre">--cpuset</span></code> will automatically disable <code class="docutils literal notranslate"><span class="pre">--overprovisioned</span></code></p>
+<p>For example, to enable optimizations for running in an statically partitioned environment:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --overprovisioned <span class="m">0</span>
+</pre></div>
+</div>
+</section>
+<section id="io-setup-enable">
+<h4><code class="docutils literal notranslate"><span class="pre">--io-setup</span> <span class="pre">ENABLE</span></code><a class="headerlink" href="#io-setup-enable" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--io-setup</span></code> command line option specifies if the <code class="docutils literal notranslate"><span class="pre">scylla_io_setup</span></code> script is run when the container is started for the first time.
+This is useful if users want to specify I/O settings themselves in environments such as Kubernetes, where running <code class="docutils literal notranslate"><span class="pre">iotune</span></code> is problematic.
+The default of <code class="docutils literal notranslate"><span class="pre">--io-setup</span></code> is <code class="docutils literal notranslate"><span class="pre">1</span></code>, which means I/O setup is run.</p>
+<p>For example, to skip running I/O setup:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --io-setup <span class="m">0</span>
+</pre></div>
+</div>
+<p><strong>Since: 4.3</strong></p>
+</section>
+<section id="cpuset-cpuset">
+<h4><code class="docutils literal notranslate"><span class="pre">--cpuset</span> <span class="pre">CPUSET</span></code><a class="headerlink" href="#cpuset-cpuset" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--cpuset</span></code> command line option restricts Scylla to run on only on CPUs specified by <code class="docutils literal notranslate"><span class="pre">CPUSET</span></code>.
+The <code class="docutils literal notranslate"><span class="pre">CPUSET</span></code> value is either a single CPU (e.g. <code class="docutils literal notranslate"><span class="pre">--cpuset</span> <span class="pre">1</span></code>), a range (e.g. <code class="docutils literal notranslate"><span class="pre">--cpuset</span> <span class="pre">2-3</span></code>), or a list (e.g. <code class="docutils literal notranslate"><span class="pre">--cpuset</span> <span class="pre">1,2,5</span></code>), or a combination of the last two options (e.g. <code class="docutils literal notranslate"><span class="pre">--cpuset</span> <span class="pre">1-2,5</span></code>).</p>
+<p>For example, to restrict Scylla to run on physical CPUs 0 to 2 and 4:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --cpuset <span class="m">0</span>-2,4
+</pre></div>
+</div>
+</section>
+<section id="developer-mode-enable">
+<h4><code class="docutils literal notranslate"><span class="pre">--developer-mode</span> <span class="pre">ENABLE</span></code><a class="headerlink" href="#developer-mode-enable" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--developer-mode</span></code> command line option enables Scylla’s developer mode, which relaxes checks for things like XFS and enables Scylla to run on unsupported configurations (which usually results in suboptimal performance).
+If no <code class="docutils literal notranslate"><span class="pre">--developer-mode</span></code> command line option is defined, Scylla defaults to running with developer mode <em>enabled</em>.
+It is highly recommended to disable developer mode for production deployments to ensure Scylla is able to run with maximum performance.</p>
+<p>For example, to disable developer mode:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --developer-mode <span class="m">0</span>
+</pre></div>
+</div>
+</section>
+<section id="experimental-enable">
+<h4><code class="docutils literal notranslate"><span class="pre">--experimental</span> <span class="pre">ENABLE</span></code><a class="headerlink" href="#experimental-enable" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--experimental</span></code> command line option enables Scylla’s experimental mode
+If no <code class="docutils literal notranslate"><span class="pre">--experimental</span></code> command line option is defined, Scylla defaults to running with experimental mode <em>disabled</em>.
+It is highly recommended to disable experimental mode for production deployments.</p>
+<p>For example, to enable experimental mode:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker run --name some-scylla -d scylladb/scylla --experimental <span class="m">1</span>
+</pre></div>
+</div>
+<p><strong>Since: 2.0</strong></p>
+</section>
+<section id="disable-version-check">
+<h4><code class="docutils literal notranslate"><span class="pre">--disable-version-check</span></code><a class="headerlink" href="#disable-version-check" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--disable-version-check</span></code> disable the version validation check.</p>
+<p><strong>Since: 2.2</strong></p>
+</section>
+<section id="authenticator-authenticator">
+<h4><code class="docutils literal notranslate"><span class="pre">--authenticator</span> <span class="pre">AUTHENTICATOR</span></code><a class="headerlink" href="#authenticator-authenticator" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--authenticator</span></code> command lines option allows to provide the authenticator class Scylla will use. By default Scylla uses the <code class="docutils literal notranslate"><span class="pre">AllowAllAuthenticator</span></code> which performs no credentials checks. The second option is using the <code class="docutils literal notranslate"><span class="pre">PasswordAuthenticator</span></code> parameter, which relies on username/password pairs to authenticate users.</p>
+<p><strong>Since: 2.3</strong></p>
+</section>
+<section id="authorizer-authorizer">
+<h4><code class="docutils literal notranslate"><span class="pre">--authorizer</span> <span class="pre">AUTHORIZER</span></code><a class="headerlink" href="#authorizer-authorizer" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">--authorizer</span></code> command lines option allows to provide the authorizer class Scylla will use. By default Scylla uses the <code class="docutils literal notranslate"><span class="pre">AllowAllAuthorizer</span></code> which allows any action to any user. The second option is using the <code class="docutils literal notranslate"><span class="pre">CassandraAuthorizer</span></code> parameter, which stores permissions in <code class="docutils literal notranslate"><span class="pre">system_auth.permissions</span></code> table.</p>
+<p><strong>Since: 2.3</strong></p>
+</section>
+</section>
+<section id="jmx-parameters">
+<h3>JMX parameters<a class="headerlink" href="#jmx-parameters" title="Permalink to this headline">¶</a></h3>
+<p>JMX Scylla service is initialized from the <code class="docutils literal notranslate"><span class="pre">/scylla-jmx-service.sh</span></code> on
+container startup. By default the script uses <code class="docutils literal notranslate"><span class="pre">/etc/sysconfig/scylla-jmx</span></code>
+to read default configuration. It then can be overridden by setting
+an environmental parameters.</p>
+<p>An example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">run</span> <span class="o">-</span><span class="n">d</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&quot;SCYLLA_JMX_ADDR=-ja 0.0.0.0&quot;</span> <span class="o">-</span><span class="n">e</span> <span class="n">SCYLLA_JMX_REMOTE</span><span class="o">=-</span><span class="n">r</span> <span class="o">--</span><span class="n">publish</span> <span class="mi">7199</span><span class="p">:</span><span class="mi">7199</span> <span class="n">scylladb</span><span class="o">/</span><span class="n">scylla</span>
+</pre></div>
+</div>
+<section id="scylla-jmx-port">
+<h4>SCYLLA_JMX_PORT<a class="headerlink" href="#scylla-jmx-port" title="Permalink to this headline">¶</a></h4>
+<p>Scylla JMX listening port.</p>
+<p>Default value:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SCYLLA_JMX_PORT</span><span class="o">=</span><span class="s2">&quot;-jp 7199&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="scylla-api-port">
+<h4>SCYLLA_API_PORT<a class="headerlink" href="#scylla-api-port" title="Permalink to this headline">¶</a></h4>
+<p>Scylla API port for JMX to connect to.</p>
+<p>Default value:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SCYLLA_API_PORT</span><span class="o">=</span><span class="s2">&quot;-p 10000&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="scylla-api-addr">
+<h4>SCYLLA_API_ADDR<a class="headerlink" href="#scylla-api-addr" title="Permalink to this headline">¶</a></h4>
+<p>Scylla API address for JMX to connect to.</p>
+<p>Default value:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SCYLLA_API_ADDR</span><span class="o">=</span><span class="s2">&quot;-a localhost&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="scylla-jmx-addr">
+<h4>SCYLLA_JMX_ADDR<a class="headerlink" href="#scylla-jmx-addr" title="Permalink to this headline">¶</a></h4>
+<p>JMX address to bind on.</p>
+<p>Default value:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SCYLLA_JMX_ADDR</span><span class="o">=</span><span class="s2">&quot;-ja localhost&quot;</span>
+</pre></div>
+</div>
+<p>For example, it is possible to make JMX available to the outer world
+by changing its bind address to <code class="docutils literal notranslate"><span class="pre">0.0.0.0</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">run</span> <span class="o">-</span><span class="n">d</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&quot;SCYLLA_JMX_ADDR=-ja 0.0.0.0&quot;</span> <span class="o">-</span><span class="n">e</span> <span class="n">SCYLLA_JMX_REMOTE</span><span class="o">=-</span><span class="n">r</span> <span class="o">--</span><span class="n">publish</span> <span class="mi">7199</span><span class="p">:</span><span class="mi">7199</span> <span class="n">scylladb</span><span class="o">/</span><span class="n">scylla</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">cassandra-stress</span></code> requires direct access to the JMX.</p>
+</section>
+<section id="scylla-jmx-file">
+<h4>SCYLLA_JMX_FILE<a class="headerlink" href="#scylla-jmx-file" title="Permalink to this headline">¶</a></h4>
+<p>A JMX service configuration file path.</p>
+<p>Example value:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SCYLLA_JMX_FILE</span><span class="o">=</span><span class="s2">&quot;-cf /etc/scylla.d/scylla-user.cfg&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="scylla-jmx-local">
+<h4>SCYLLA_JMX_LOCAL<a class="headerlink" href="#scylla-jmx-local" title="Permalink to this headline">¶</a></h4>
+<p>The location of the JMX executable.</p>
+<p>Example value:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SCYLLA_JMX_LOCAL</span><span class="o">=</span><span class="s2">&quot;-l /opt/scylladb/jmx</span>
+</pre></div>
+</div>
+</section>
+<section id="scylla-jmx-remote">
+<h4>SCYLLA_JMX_REMOTE<a class="headerlink" href="#scylla-jmx-remote" title="Permalink to this headline">¶</a></h4>
+<p>Allow JMX to run remotely.</p>
+<p>Example value:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SCYLLA_JMX_REMOTE</span><span class="o">=</span><span class="s2">&quot;-r&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="scylla-jmx-debug">
+<h4>SCYLLA_JMX_DEBUG<a class="headerlink" href="#scylla-jmx-debug" title="Permalink to this headline">¶</a></h4>
+<p>Enable debugger.</p>
+<p>Example value:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SCYLLA_JMX_DEBUG</span><span class="o">=</span><span class="s2">&quot;-d&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="related-links">
+<h3>Related Links<a class="headerlink" href="#related-links" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="http://docs.scylladb.com/procedures/best_practices_scylla_on_docker/">Best practices for running Scylla on docker</a></p></li>
+</ul>
+</section>
+</section>
+<section id="user-feedback">
+<h2>User Feedback<a class="headerlink" href="#user-feedback" title="Permalink to this headline">¶</a></h2>
+<section id="issues">
+<h3>Issues<a class="headerlink" href="#issues" title="Permalink to this headline">¶</a></h3>
+<p>For bug reports, please use Scylla’s <a class="reference external" href="https://github.com/scylladb/scylla/issues">issue tracker</a> on GitHub.
+Please read the <a class="reference external" href="http://docs.scylladb.com/operating-scylla/troubleshooting/report_scylla_problem/">How to report a Scylla problem</a> page before you report bugs.</p>
+<p>For general help, see Scylla’s <a class="reference external" href="http://www.scylladb.com/doc/">documentation</a>.
+For questions and comments, use Scylla’s <a class="reference external" href="http://www.scylladb.com/community/">mailing lists</a>.</p>
+</section>
+<section id="contributing">
+<h3>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h3>
+<p>Want to scratch your own itch and contribute a patch.
+We are eager to review and merge your code.
+Please consult the <a class="reference external" href="http://www.scylladb.com/kb/contributing/">Contributing on Scylla page</a></p>
+</section>
+</section>
+</section>
+
+        </div>
+
+        <div id="sidebar" class="large-3 large-pull-6 columns"><div class="side-nav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Scylla Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../alternator/alternator.html">Alternator: DynamoDB API in Scylla</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design-notes/index.html">Design Notes</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Guides</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="HACKING.html">Guidelines for developing Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_v2.html">Scylla RESTful API V2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building.html">Building Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="debugging.html">Debugging with GDB</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Docker Hub Image</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging in Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tracing.html">Tracing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/index.html">Contribute</a></li>
+</ul>
+
+</div>
+        </div>
+
+        <div class="large-3 columns">
+            
+                <div class="scylla-dropdown single-version">
+    <a href="#" data-options="align:bottom" data-dropdown="drop-versions" class="scylla-dropdown__button">
+        
+            master
+        
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-versions" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+            
+              <li><a href="docker-hub.html">master</a></li>
+            
+    </ul>
+</div>
+            
+        </div>
+
+    </div>
+</section>
+
+<!-- newsleter modal -->
+
+<div id="newsletter_signup" class="reveal-modal tiny radius dark_modal" data-reveal aria-labelledby="modalTitle" aria-hidden="true" role="dialog">
+    <a class="close-reveal-modal" aria-label="Close">×</a>
+    <h2 id="modalTitle">Sign up for the Scylla newsletter</h2>
+    <div id="mc_embed_signup">
+        <form action="//cloudius-systems.us10.list-manage.com/subscribe/post?u=df8bb543c68230d5f7b4dcf78&amp;id=9a4589f144" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate="">
+            <div id="mc_embed_signup_scroll">
+
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-EMAIL">Email</label></div>
+                        <div class="small-9 columns"><input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-FNAME">First Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="FNAME" class="" id="mce-FNAME"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-LNAME">Last Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="LNAME" class="" id="mce-LNAME"></div>
+                    </div>
+                </div>
+                <div id="mce-responses" class="clear">
+                    <div class="response" id="mce-error-response" style="display:none"></div>
+                    <div class="response" id="mce-success-response" style="display:none"></div>
+                </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                <div style="position: absolute; left: -5000px;"><input type="text" name="b_df8bb543c68230d5f7b4dcf78_9a4589f144" tabindex="-1" value=""></div>
+                <div class="clear"><input type="submit" class="button" value="Sign up" name="subscribe" id="mc-embedded-subscribe"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- end newsleter modal -->
+
+
+
+<!-- footer.html -->
+<footer id="footer">
+    <div class="footer-top">
+        <a class="logo" href="https://www.scylladb.com"><img src="../_static/img/logo-scylla-horizontal-RGB.svg" alt=""></a>
+        <div class="footer-links">
+            <a class="link" href="https://docs.scylladb.com">Docs</a>
+            <a class="link" href="https://www.scylladb.com/company/contact-us/">Contact Us</a>
+            <a class="link" href="https://www.scylladb.com/company/">About Us</a>
+          <div class="scylla-dropdown">
+    <a href="#" data-options="align:top" data-dropdown="drop-contribute" class="scylla-dropdown__button">
+        Contribute 
+        <i class="fa fa-github" aria-hidden="true"></i>
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-contribute" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+        <li><a href="https://github.com/scylladb/scylla/issues/new?title=Issue in page Docker Hub Image&&body=I%20would%20like%20to%20report%20an%20issue%20in%20page%20https://scylla.docs.scylladb.com/master/guides/docker-hub%0A%0A%23%23%23%20Problem%0A%0A%23%23%23%20%20Suggest%20a%20fix" target="_blank">Report a doc issue <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+        <li><a href="https://docs.scylladb.com/contribute/" target="_blank">Learn how to contribute <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+    </ul>
+</div>
+        </div>
+        <div class="footer-actions">
+            <a class="link-icon" href="https://github.com/ScyllaDB" target="_blank">
+                <span class="icon-github2"></span></a>
+            <a class="link-icon" href="https://twitter.com/ScyllaDB" target="_blank">
+                <span class="icon-twitter"></span></a>
+            <a class="link-icon" href="https://www.linkedin.com/company/scylladb"  target="_blank">
+                <span class="icon-linkedin2"></span></a>
+            <a class="link-icon" href="https://www.facebook.com/scylladb/" target="_blank">
+                <span class="icon-facebook"></span></a>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <div class="footer-info">
+            <div class="footer-copyright">
+                &#169; 2021, ScyllaDB. All rights reserved.
+            </div>
+            <div class="footer-last-updated">
+                Last updated on 20 July 2021.
+            </div>
+            <div class="footer-version">
+                Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+                &amp; <a href="https://sphinx-theme.scylladb.com">ScyllaDB Theme 0.1.25</a>
+            </div>
+        </div>
+        <div class="footer-links">
+        </div>
+    </div>
+</footer>
+<!-- end footer.html -->
+
+<!-- bodyscripts.html -->
+<!-- at the end of the BODY --> 
+<script src="../_static/js/vendor/jquery.js"></script>
+<script src="../_static/js/vendor/jquery.cookie.min.js"></script>
+<script src="../_static/expertrec.js"></script>
+<script src="../_static/js/foundation/foundation.js"></script>
+<script src="../_static/js/foundation/foundation.topbar.js"></script>
+<script src="../_static/js/foundation/foundation.dropdown.js"></script>
+<script src="../_static/app.js"></script>
+<script>
+    $(document).foundation();
+</script>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T8P2JP"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+  <!-- end bodyscripts.html -->
+</body>
+</html>

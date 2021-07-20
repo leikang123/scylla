@@ -1,0 +1,406 @@
+
+
+
+<!doctype html>
+<html class="no-js" lang="en">
+  
+<head><!-- begin head.html -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>
+    Building Scylla | Scylla Docs
+    </title>
+    <meta name="description" content="Scylla is an Apache Cassandra-compatible NoSQL data store that can handle 1 million transactions per second on a single server."/>
+
+    <link rel="icon" href="../_static/img/favicon.ico" type="image/x-icon"/>
+    <link rel="canonical" href="https://docs.scylladb.com/">
+    <link rel="author" href="mailto:info@scylladb.com">
+    <link rel="stylesheet" href="../_static/" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/segment.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/menu.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/tab.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/tabs.css" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/css/doc/main.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css"/>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+
+    <script src="../_static/js/vendor/modernizr.js"></script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-T8P2JP');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Marketo -->
+    <script type="text/javascript"> (function() { var didInit = false; function initMunchkin() { if(didInit === false) { didInit = true; Munchkin.init('791-QBF-350'); } } var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//munchkin.marketo.net/munchkin.js'; s.onreadystatechange = function() { if (this.readyState == 'complete' || this.readyState == 'loaded') { initMunchkin(); } }; s.onload = initMunchkin; document.getElementsByTagName('head')[0].appendChild(s); })(); </script>
+    <!-- End Marketo -->
+
+<!-- end head.html -->
+</head>
+
+<body>
+
+
+
+<header id="header" class="animated">
+    <div class="topbar_continer contain-to-grid clearfix">
+        <nav class="top-bar" id="top-bar" data-topbar role="navigation">
+            <ul class="title-area">
+                <li class="name">
+                    <div class="logo">
+                        <a href="https://docs.scylladb.com/"><img src="../_static/img/logo-scylla-docs.svg" alt="" width="151"></a>
+                    </div>
+                </li>
+                <li class="toggle-topbar"><a href="#"><span class="icon-manu"></span></a></li>
+            </ul>
+            <section class="top-bar-section clearfix">
+                <ul class="right">
+                    
+                    <li>
+                        <a href="https://scylla.docs.scylladb.com">Scylla Developer Notes</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://university.scylladb.com/">Scylla University</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://www.scylladb.com/">ScyllaDB Home</a>
+                    </li>
+                    
+                    <li class="search_continer show-for-medium-up">	
+                        <ci-search></ci-search>	
+                    </li>	
+                </ul>
+            </section>
+        </nav>
+    </div>
+</header>
+<section id="content">
+    <div class="row">
+	
+	<div class="large-6 large-push-3 columns">
+
+        
+
+        <section id="building-scylla">
+<h1>Building Scylla<a class="headerlink" href="#building-scylla" title="Permalink to this headline">¶</a></h1>
+<p>This document describes how to build Scylla’s executables, tests, and packages.</p>
+<p><em>Please note that these instructions use <code class="docutils literal notranslate"><span class="pre">dbuild</span></code> – a Docker-based development environment – to build Scylla.
+However, <code class="docutils literal notranslate"><span class="pre">dbuild</span></code> is optional and you can also build on your host machine by running the same commands without the <code class="docutils literal notranslate"><span class="pre">dbuild</span></code> prefix.</em></p>
+<section id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="#getting-started">Getting Started</a></p></li>
+<li><p><a class="reference external" href="#configuring">Configuring</a></p></li>
+<li><p><a class="reference external" href="#building">Building</a></p></li>
+<li><p><a class="reference external" href="#packaging">Packaging</a></p></li>
+<li><p><a class="reference external" href="#artifacts">Artifacts</a></p></li>
+</ul>
+</section>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>To build everything, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">git clone https://github.com/scylladb/scylla</span>
+<span class="go">git submodule update --init --force --recursive</span>
+<span class="go">./tools/toolchain/dbuild ./configure.py --mode=&lt;mode&gt;</span>
+<span class="go">./tools/toolchain/dbuild ninja</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">mode</span></code> is <code class="docutils literal notranslate"><span class="pre">dev</span></code> for development builds, <code class="docutils literal notranslate"><span class="pre">release</span></code> for release builds, and <code class="docutils literal notranslate"><span class="pre">debug</span></code> for debug builds.</p>
+<p>Alternatively, you can also pass the <code class="docutils literal notranslate"><span class="pre">mode</span></code> directly to the <code class="docutils literal notranslate"><span class="pre">ninja</span></code> command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">git submodule update --init --force --recursive</span>
+<span class="go">./tools/toolchain/dbuild ./configure.py</span>
+<span class="go">./tools/toolchain/dbuild ninja &lt;mode&gt;</span>
+</pre></div>
+</div>
+<p>After the build completes, you can find build artifacts in <code class="docutils literal notranslate"><span class="pre">build/&lt;mode&gt;</span></code> directory.</p>
+<p>You can run unit tests with:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tools/toolchain/dbuild test</span>
+</pre></div>
+</div>
+<p>or launch a Scylla server locally with:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tools/toolchain/dbuild ./build/dev/scylla --workdir tmp --developer-mode 1 --smp 1 --memory 1G</span>
+</pre></div>
+</div>
+<p>For more help with build targets, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tools/toolchain/dbuild ninja help</span>
+</pre></div>
+</div>
+<p>That’s it!</p>
+</section>
+<section id="configuring">
+<h2>Configuring<a class="headerlink" href="#configuring" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">configure.py</span></code> script, which is run as the first step of a build, generates a <code class="docutils literal notranslate"><span class="pre">build.ninja</span></code> build file (similar to a <code class="docutils literal notranslate"><span class="pre">Makefile</span></code>) for the <a class="reference external" href="https://ninja.org/">Ninja</a> build tool that we use for building.</p>
+<p>To configure the build system for a specific build mode, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tools/toolchain/dbuild ./configure.py --mode=&lt;mode&gt;</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">mode</span></code> flag determines build flags for the <code class="docutils literal notranslate"><span class="pre">scylla</span></code> executable:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">release</span></code> is the release build that targets fast execution time (slow build, fast execution).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dev</span></code> is the development build that targets fast build times (fast build, reasonable execution)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">debug</span></code> is the debug build that targets error discovery (slow build, slow execution).</p></li>
+</ul>
+<p>If you don’t specify a build mode, the <code class="docutils literal notranslate"><span class="pre">build.ninja</span></code> will contain configuration for <em>all build modes</em>.</p>
+</section>
+<section id="building">
+<h2>Building<a class="headerlink" href="#building" title="Permalink to this headline">¶</a></h2>
+<p>To build Scylla executables and tests, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tools/toolchain/dbuild ninja build</span>
+</pre></div>
+</div>
+<p>This will build Scylla for the build mode specified by the <code class="docutils literal notranslate"><span class="pre">configure.py</span></code> command.</p>
+<p>Alternatively, if you did not specify a build mode in the <code class="docutils literal notranslate"><span class="pre">configure.py</span></code> step, you can build executables and tests for a specific build mode with:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tools/toolchain/dbuild ninja &lt;mode&gt;-build</span>
+</pre></div>
+</div>
+</section>
+<section id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h2>
+<p>To run unit tests, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tools/toolchain/dbuild ninja test</span>
+</pre></div>
+</div>
+<p>Alternatively, to run unit tests for a specific build mode, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tools/toolchain/dbuild ninja &lt;dev&gt;-test</span>
+</pre></div>
+</div>
+</section>
+<section id="packaging">
+<h2>Packaging<a class="headerlink" href="#packaging" title="Permalink to this headline">¶</a></h2>
+<p>The build system generates <em>relocatable packages</em>, which means that the packages contain all the dependencies they need, and you can, therefore, install and run the same binaries on all Linux distributions.
+The relocatable package tarball is used as a base for building the Linux distribution specific packages, <code class="docutils literal notranslate"><span class="pre">.rpm</span></code>s and <code class="docutils literal notranslate"><span class="pre">.deb</span></code>s.</p>
+<p>To build packages, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tools/toolchain/dbuild ninja dist</span>
+</pre></div>
+</div>
+<p>Alternatively, to build packages for a specific build mode, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">./tools/toolchain/dbuild ninja &lt;mode&gt;-dist</span>
+</pre></div>
+</div>
+<p>To verify the packages, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">ninja dist-check</span>
+</pre></div>
+</div>
+<p><em>Please note that you need to run <code class="docutils literal notranslate"><span class="pre">dist-check</span></code> on the host because it requires Docker to perform the verification.</em></p>
+</section>
+<section id="artifacts">
+<h2>Artifacts<a class="headerlink" href="#artifacts" title="Permalink to this headline">¶</a></h2>
+<p>This section lists all the artifacts generated by the build system.</p>
+<p><strong>Executables</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">build/&lt;mode&gt;/scylla</span></code></p></li>
+</ul>
+<p><strong>Tests</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">build/&lt;mode&gt;/test/**</span></code></p></li>
+</ul>
+<p><strong>Tarballs</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">build/&lt;mode&gt;/dist/tar/scylla-unified-package.tar.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/&lt;mode&gt;/dist/tar/scylla-package.tar.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/&lt;mode&gt;/dist/tar/scylla-python3-package.tar.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/&lt;mode&gt;/dist/tar/scylla-jmx-package.tar.gz</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/&lt;mode&gt;/dist/tar/scylla-tools-package.tar.gz</span></code></p></li>
+</ul>
+<p><strong>.rpms:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">build/dist/&lt;mode&gt;/redhat/RPMS/x86_64/scylla-*.rpm</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/dist/&lt;mode&gt;/redhat/RPMS/x86_64/scylla-conf-*.rpm</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/dist/&lt;mode&gt;/redhat/RPMS/x86_64/scylla-debuginfo-*.rpm</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/dist/&lt;mode&gt;/redhat/RPMS/x86_64/scylla-kernel-conf-*.rpm</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/dist/&lt;mode&gt;/redhat/RPMS/x86_64/scylla-server-*.rpm</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/python3/build/redhat/RPMS/x86_64/scylla-python3-*.rpm</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/jmx/build/redhat/RPMS/noarch/scylla-jmx-*.rpm</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/java/build/redhat/RPMS/noarch/scylla-tools-*.rpm</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/java/build/redhat/RPMS/noarch/scylla-tools-core-*.rpm</span></code></p></li>
+</ul>
+<p><strong>.debs:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">build/dist/dev/debian/scylla-conf_*.deb</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/dist/dev/debian/scylla_*.deb</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/dist/dev/debian/scylla-server_*.deb</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/dist/dev/debian/scylla-kernel-conf_*.deb</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build/dist/dev/debian/scylla-server-dbg_*.deb</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/python3/build/debian/scylla-python3_*.deb</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/jmx/build/debian/scylla-jmx_*.deb</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/java/build/debian/scylla-tools-core_*.deb</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tools/java/build/debian/scylla-tools_*.deb</span></code></p></li>
+</ul>
+</section>
+</section>
+
+        </div>
+
+        <div id="sidebar" class="large-3 large-pull-6 columns"><div class="side-nav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Scylla Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../alternator/alternator.html">Alternator: DynamoDB API in Scylla</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design-notes/index.html">Design Notes</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Guides</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="HACKING.html">Guidelines for developing Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_v2.html">Scylla RESTful API V2</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Building Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="debugging.html">Debugging with GDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="docker-hub.html">Docker Hub Image</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging in Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tracing.html">Tracing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/index.html">Contribute</a></li>
+</ul>
+
+</div>
+        </div>
+
+        <div class="large-3 columns">
+            
+                <div class="scylla-dropdown single-version">
+    <a href="#" data-options="align:bottom" data-dropdown="drop-versions" class="scylla-dropdown__button">
+        
+            master
+        
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-versions" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+            
+              <li><a href="building.html">master</a></li>
+            
+    </ul>
+</div>
+            
+        </div>
+
+    </div>
+</section>
+
+<!-- newsleter modal -->
+
+<div id="newsletter_signup" class="reveal-modal tiny radius dark_modal" data-reveal aria-labelledby="modalTitle" aria-hidden="true" role="dialog">
+    <a class="close-reveal-modal" aria-label="Close">×</a>
+    <h2 id="modalTitle">Sign up for the Scylla newsletter</h2>
+    <div id="mc_embed_signup">
+        <form action="//cloudius-systems.us10.list-manage.com/subscribe/post?u=df8bb543c68230d5f7b4dcf78&amp;id=9a4589f144" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate="">
+            <div id="mc_embed_signup_scroll">
+
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-EMAIL">Email</label></div>
+                        <div class="small-9 columns"><input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-FNAME">First Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="FNAME" class="" id="mce-FNAME"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-LNAME">Last Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="LNAME" class="" id="mce-LNAME"></div>
+                    </div>
+                </div>
+                <div id="mce-responses" class="clear">
+                    <div class="response" id="mce-error-response" style="display:none"></div>
+                    <div class="response" id="mce-success-response" style="display:none"></div>
+                </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                <div style="position: absolute; left: -5000px;"><input type="text" name="b_df8bb543c68230d5f7b4dcf78_9a4589f144" tabindex="-1" value=""></div>
+                <div class="clear"><input type="submit" class="button" value="Sign up" name="subscribe" id="mc-embedded-subscribe"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- end newsleter modal -->
+
+
+
+<!-- footer.html -->
+<footer id="footer">
+    <div class="footer-top">
+        <a class="logo" href="https://www.scylladb.com"><img src="../_static/img/logo-scylla-horizontal-RGB.svg" alt=""></a>
+        <div class="footer-links">
+            <a class="link" href="https://docs.scylladb.com">Docs</a>
+            <a class="link" href="https://www.scylladb.com/company/contact-us/">Contact Us</a>
+            <a class="link" href="https://www.scylladb.com/company/">About Us</a>
+          <div class="scylla-dropdown">
+    <a href="#" data-options="align:top" data-dropdown="drop-contribute" class="scylla-dropdown__button">
+        Contribute 
+        <i class="fa fa-github" aria-hidden="true"></i>
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-contribute" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+        <li><a href="https://github.com/scylladb/scylla/issues/new?title=Issue in page Building Scylla&&body=I%20would%20like%20to%20report%20an%20issue%20in%20page%20https://scylla.docs.scylladb.com/master/guides/building%0A%0A%23%23%23%20Problem%0A%0A%23%23%23%20%20Suggest%20a%20fix" target="_blank">Report a doc issue <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+        <li><a href="https://docs.scylladb.com/contribute/" target="_blank">Learn how to contribute <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+    </ul>
+</div>
+        </div>
+        <div class="footer-actions">
+            <a class="link-icon" href="https://github.com/ScyllaDB" target="_blank">
+                <span class="icon-github2"></span></a>
+            <a class="link-icon" href="https://twitter.com/ScyllaDB" target="_blank">
+                <span class="icon-twitter"></span></a>
+            <a class="link-icon" href="https://www.linkedin.com/company/scylladb"  target="_blank">
+                <span class="icon-linkedin2"></span></a>
+            <a class="link-icon" href="https://www.facebook.com/scylladb/" target="_blank">
+                <span class="icon-facebook"></span></a>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <div class="footer-info">
+            <div class="footer-copyright">
+                &#169; 2021, ScyllaDB. All rights reserved.
+            </div>
+            <div class="footer-last-updated">
+                Last updated on 20 July 2021.
+            </div>
+            <div class="footer-version">
+                Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+                &amp; <a href="https://sphinx-theme.scylladb.com">ScyllaDB Theme 0.1.25</a>
+            </div>
+        </div>
+        <div class="footer-links">
+        </div>
+    </div>
+</footer>
+<!-- end footer.html -->
+
+<!-- bodyscripts.html -->
+<!-- at the end of the BODY --> 
+<script src="../_static/js/vendor/jquery.js"></script>
+<script src="../_static/js/vendor/jquery.cookie.min.js"></script>
+<script src="../_static/expertrec.js"></script>
+<script src="../_static/js/foundation/foundation.js"></script>
+<script src="../_static/js/foundation/foundation.topbar.js"></script>
+<script src="../_static/js/foundation/foundation.dropdown.js"></script>
+<script src="../_static/app.js"></script>
+<script>
+    $(document).foundation();
+</script>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T8P2JP"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+  <!-- end bodyscripts.html -->
+</body>
+</html>

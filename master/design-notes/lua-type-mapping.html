@@ -1,0 +1,403 @@
+
+
+
+<!doctype html>
+<html class="no-js" lang="en">
+  
+<head><!-- begin head.html -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>
+    CQL to Lua type mapping | Scylla Docs
+    </title>
+    <meta name="description" content="Scylla is an Apache Cassandra-compatible NoSQL data store that can handle 1 million transactions per second on a single server."/>
+
+    <link rel="icon" href="../_static/img/favicon.ico" type="image/x-icon"/>
+    <link rel="canonical" href="https://docs.scylladb.com/">
+    <link rel="author" href="mailto:info@scylladb.com">
+    <link rel="stylesheet" href="../_static/" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/segment.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/menu.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/semantic-ui-2.4.1/tab.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_tabs/tabs.css" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/css/foundation.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/css/doc/main.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css"/>
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+
+    <script src="../_static/js/vendor/modernizr.js"></script>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-T8P2JP');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Marketo -->
+    <script type="text/javascript"> (function() { var didInit = false; function initMunchkin() { if(didInit === false) { didInit = true; Munchkin.init('791-QBF-350'); } } var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//munchkin.marketo.net/munchkin.js'; s.onreadystatechange = function() { if (this.readyState == 'complete' || this.readyState == 'loaded') { initMunchkin(); } }; s.onload = initMunchkin; document.getElementsByTagName('head')[0].appendChild(s); })(); </script>
+    <!-- End Marketo -->
+
+<!-- end head.html -->
+</head>
+
+<body>
+
+
+
+<header id="header" class="animated">
+    <div class="topbar_continer contain-to-grid clearfix">
+        <nav class="top-bar" id="top-bar" data-topbar role="navigation">
+            <ul class="title-area">
+                <li class="name">
+                    <div class="logo">
+                        <a href="https://docs.scylladb.com/"><img src="../_static/img/logo-scylla-docs.svg" alt="" width="151"></a>
+                    </div>
+                </li>
+                <li class="toggle-topbar"><a href="#"><span class="icon-manu"></span></a></li>
+            </ul>
+            <section class="top-bar-section clearfix">
+                <ul class="right">
+                    
+                    <li>
+                        <a href="https://scylla.docs.scylladb.com">Scylla Developer Notes</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://university.scylladb.com/">Scylla University</a>
+                    </li>
+                    
+                    <li>
+                        <a href="https://www.scylladb.com/">ScyllaDB Home</a>
+                    </li>
+                    
+                    <li class="search_continer show-for-medium-up">	
+                        <ci-search></ci-search>	
+                    </li>	
+                </ul>
+            </section>
+        </nav>
+    </div>
+</header>
+<section id="content">
+    <div class="row">
+	
+	<div class="large-6 large-push-3 columns">
+
+        
+
+        <section id="cql-to-lua-type-mapping">
+<h1>CQL to Lua type mapping<a class="headerlink" href="#cql-to-lua-type-mapping" title="Permalink to this headline">¶</a></h1>
+<p>This document describes how CQL types are mapped to and from Lua in UDF.</p>
+<section id="ascii-text-and-varchar">
+<h2>ASCII, TEXT and VARCHAR<a class="headerlink" href="#ascii-text-and-varchar" title="Permalink to this headline">¶</a></h2>
+<p>When converting to Lua, these types are mapped to Lua strings.</p>
+<p>When converting to CQL, types that Lua coerces to string are
+accepted. The values are verified to be valid ASCII or UTF8 as
+appropriate.</p>
+</section>
+<section id="blob">
+<h2>BLOB<a class="headerlink" href="#blob" title="Permalink to this headline">¶</a></h2>
+<p>Lua strings can hold arbitrary data, so blobs are converted to and
+from Lua strings.</p>
+</section>
+<section id="tinyint-smallint-int-and-bigint">
+<h2>TINYINT, SMALLINT, INT and BIGINT<a class="headerlink" href="#tinyint-smallint-int-and-bigint" title="Permalink to this headline">¶</a></h2>
+<p>Lua 5.3 has native support for 64 bit integers, so all these types are
+converted to a native integer.</p>
+<p>When converting to CQL, types that Lua coerces to integers are
+supported. If the value is too large for the CQL type, it wraps.</p>
+</section>
+<section id="boolean">
+<h2>BOOLEAN<a class="headerlink" href="#boolean" title="Permalink to this headline">¶</a></h2>
+<p>This maps exactly to and from a Lua boolean.</p>
+</section>
+<section id="counter">
+<h2>COUNTER<a class="headerlink" href="#counter" title="Permalink to this headline">¶</a></h2>
+<p>Since UDF are pure functions, a counter is mapped to and from a native
+integer.</p>
+</section>
+<section id="float-and-double">
+<h2>FLOAT and DOUBLE<a class="headerlink" href="#float-and-double" title="Permalink to this headline">¶</a></h2>
+<p>When converting to Lua, these are mapped o Lua’s native double.</p>
+<p>When converting to CQL, a number is rounded to a float or double value
+as appropriate. For example, it is valid to return a integer that is
+too large to have an exact representation as a double.</p>
+</section>
+<section id="varint-and-decimal">
+<h2>VARINT and DECIMAL<a class="headerlink" href="#varint-and-decimal" title="Permalink to this headline">¶</a></h2>
+<p>These are mapped to a userdata since there is no native support for
+large numbers is Lua. We try to provide type coercions similar to
+those Lua has. For example, a UDF returning the CQL type bigint, can
+return the value 42 with Lua code that returns</p>
+<ul class="simple">
+<li><p>The integer 42</p></li>
+<li><p>The double 42</p></li>
+<li><p>The string “42”</p></li>
+<li><p>The varint 42</p></li>
+<li><p>The decimal 42</p></li>
+</ul>
+</section>
+<section id="date">
+<h2>DATE<a class="headerlink" href="#date" title="Permalink to this headline">¶</a></h2>
+<p>When converting to Lua, a date is mapped to the number of days since
+epoch + 2^31.</p>
+<p>When converting to CQL, we support:</p>
+<ul class="simple">
+<li><p>integer (number of days since epoch + 2^31).</p></li>
+<li><p>CQL date literal in a string.</p></li>
+<li><p>A lua “date table”, but with only year, month and day</p></li>
+</ul>
+</section>
+<section id="duration">
+<h2>DURATION<a class="headerlink" href="#duration" title="Permalink to this headline">¶</a></h2>
+<p>When converting to Lua we produce the table { months = v1, days = v2, nanoseconds = v3 }.</p>
+<p>When converting to CQL we support a table in the same format or a CQL
+duration literal in a string.</p>
+</section>
+<section id="inet">
+<h2>INET<a class="headerlink" href="#inet" title="Permalink to this headline">¶</a></h2>
+<p>This is converted to and from a string (”127.0.0.1” or “::1”).</p>
+</section>
+<section id="time">
+<h2>TIME<a class="headerlink" href="#time" title="Permalink to this headline">¶</a></h2>
+<p>When converting to Lua we pass an integer with the number of seconds
+since midnight.</p>
+<p>When converting to CQL we support an integer with the same meaning or
+a CQL time literal in a string.</p>
+</section>
+<section id="timestamp">
+<h2>TIMESTAMP<a class="headerlink" href="#timestamp" title="Permalink to this headline">¶</a></h2>
+<p>When converting to Lua we pass an integer with the number of
+milliseconds since the epoch.</p>
+<p>When converting to CQL we support integers with the same meaning or
+CQL timestamp literal in a string.</p>
+</section>
+<section id="timeuuid">
+<h2>TIMEUUID<a class="headerlink" href="#timeuuid" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="uuid">
+<h2>UUID<a class="headerlink" href="#uuid" title="Permalink to this headline">¶</a></h2>
+<p>These are converted to and from the string representation.</p>
+</section>
+<section id="list">
+<h2>LIST<a class="headerlink" href="#list" title="Permalink to this headline">¶</a></h2>
+<p>A list is represented as a sequence in lua. A list with “foo” and
+“bar” is represented as {”foo”, “bar”}. It is an error to return a
+table that is not a sequence.</p>
+</section>
+<section id="tuple">
+<h2>TUPLE<a class="headerlink" href="#tuple" title="Permalink to this headline">¶</a></h2>
+<p>A tuple is represented the same way as a list, but on return we check
+the number of elements and the types.</p>
+</section>
+<section id="map">
+<h2>MAP<a class="headerlink" href="#map" title="Permalink to this headline">¶</a></h2>
+<p>These are converted to and from lua tables. A map from “foo” to 42 is
+represented as {foo = 42}.</p>
+</section>
+<section id="udt">
+<h2>UDT<a class="headerlink" href="#udt" title="Permalink to this headline">¶</a></h2>
+<p>A UDT is represented by a table like a map, but on return we check
+that:</p>
+<ul class="simple">
+<li><p>There are no unexpected keys</p></li>
+<li><p>All expected keys are present</p></li>
+<li><p>The fields have valid types</p></li>
+</ul>
+</section>
+<section id="set">
+<h2>SET<a class="headerlink" href="#set" title="Permalink to this headline">¶</a></h2>
+<p>A set is represented in lua by the keys of a table. A set with 1, 2
+and 3 is represented by as {[1] = true, [2] = true, [3] = true}. On
+return the values are checked to be true.</p>
+<p>Note that, like every other Lua table, the set is underscored. It is
+sorted when converting back to CQL.</p>
+</section>
+</section>
+
+        </div>
+
+        <div id="sidebar" class="large-3 large-pull-6 columns"><div class="side-nav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Scylla Developer Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../alternator/alternator.html">Alternator: DynamoDB API in Scylla</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Design Notes</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="IDL.html">IDL definition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdc.html">CDC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compaction_controller.html">The Compaction Controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cql-extensions.html">Scylla CQL extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cql-extensions-internal.html">Scylla CQL extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cql3-type-mapping.html">CQL3 Type Mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hinted_handoff_design.html">Hinted Handoff Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="isolation.html">Performance Isolation in Scylla</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">CQL to Lua type mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Scylla Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="migrating-from-users-to-roles.html">Migrating from users to roles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="paged-queries.html">Paged queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="protocol-extensions.html">Protocol extensions to the Cassandra Native Protocol</a></li>
+<li class="toctree-l2"><a class="reference internal" href="protocols.html">Ports and protocols in Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="redis.html">Redis API in Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="repair_based_node_ops.html">Repair based node operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="row_cache.html">Row Cache</a></li>
+<li class="toctree-l2"><a class="reference internal" href="row_level_repair.html">Row level repair</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secondary_index.html">Secondary indexes in Scylla</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sstable-scylla-format.html">File format of the Scylla.db sstable component</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sstables-directory-structure.html">sstables directory structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system_keyspace.html">System keyspace layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system_schema_keyspace.html">System schema keyspace layout</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/index.html">Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute/index.html">Contribute</a></li>
+</ul>
+
+</div>
+        </div>
+
+        <div class="large-3 columns">
+            
+                <div class="scylla-dropdown single-version">
+    <a href="#" data-options="align:bottom" data-dropdown="drop-versions" class="scylla-dropdown__button">
+        
+            master
+        
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-versions" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+            
+              <li><a href="lua-type-mapping.html">master</a></li>
+            
+    </ul>
+</div>
+            
+        </div>
+
+    </div>
+</section>
+
+<!-- newsleter modal -->
+
+<div id="newsletter_signup" class="reveal-modal tiny radius dark_modal" data-reveal aria-labelledby="modalTitle" aria-hidden="true" role="dialog">
+    <a class="close-reveal-modal" aria-label="Close">×</a>
+    <h2 id="modalTitle">Sign up for the Scylla newsletter</h2>
+    <div id="mc_embed_signup">
+        <form action="//cloudius-systems.us10.list-manage.com/subscribe/post?u=df8bb543c68230d5f7b4dcf78&amp;id=9a4589f144" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate="">
+            <div id="mc_embed_signup_scroll">
+
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-EMAIL">Email</label></div>
+                        <div class="small-9 columns"><input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-FNAME">First Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="FNAME" class="" id="mce-FNAME"></div>
+                    </div>
+                </div>
+                <div class="mc-field-group">
+                    <div class="row collapse">
+                        <div class="small-3 columns"><label for="mce-LNAME">Last Name </label></div>
+                        <div class="small-9 columns"><input type="text" value="" name="LNAME" class="" id="mce-LNAME"></div>
+                    </div>
+                </div>
+                <div id="mce-responses" class="clear">
+                    <div class="response" id="mce-error-response" style="display:none"></div>
+                    <div class="response" id="mce-success-response" style="display:none"></div>
+                </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                <div style="position: absolute; left: -5000px;"><input type="text" name="b_df8bb543c68230d5f7b4dcf78_9a4589f144" tabindex="-1" value=""></div>
+                <div class="clear"><input type="submit" class="button" value="Sign up" name="subscribe" id="mc-embedded-subscribe"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- end newsleter modal -->
+
+
+
+<!-- footer.html -->
+<footer id="footer">
+    <div class="footer-top">
+        <a class="logo" href="https://www.scylladb.com"><img src="../_static/img/logo-scylla-horizontal-RGB.svg" alt=""></a>
+        <div class="footer-links">
+            <a class="link" href="https://docs.scylladb.com">Docs</a>
+            <a class="link" href="https://www.scylladb.com/company/contact-us/">Contact Us</a>
+            <a class="link" href="https://www.scylladb.com/company/">About Us</a>
+          <div class="scylla-dropdown">
+    <a href="#" data-options="align:top" data-dropdown="drop-contribute" class="scylla-dropdown__button">
+        Contribute 
+        <i class="fa fa-github" aria-hidden="true"></i>
+        <i class="fa fa-caret-down" aria-hidden="true"></i>
+    </a>
+    <ul id="drop-contribute" class="f-dropdown scylla-dropdown__content" data-dropdown-content>
+        <li><a href="https://github.com/scylladb/scylla/issues/new?title=Issue in page CQL to Lua type mapping&&body=I%20would%20like%20to%20report%20an%20issue%20in%20page%20https://scylla.docs.scylladb.com/master/design-notes/lua-type-mapping%0A%0A%23%23%23%20Problem%0A%0A%23%23%23%20%20Suggest%20a%20fix" target="_blank">Report a doc issue <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+        <li><a href="https://docs.scylladb.com/contribute/" target="_blank">Learn how to contribute <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+    </ul>
+</div>
+        </div>
+        <div class="footer-actions">
+            <a class="link-icon" href="https://github.com/ScyllaDB" target="_blank">
+                <span class="icon-github2"></span></a>
+            <a class="link-icon" href="https://twitter.com/ScyllaDB" target="_blank">
+                <span class="icon-twitter"></span></a>
+            <a class="link-icon" href="https://www.linkedin.com/company/scylladb"  target="_blank">
+                <span class="icon-linkedin2"></span></a>
+            <a class="link-icon" href="https://www.facebook.com/scylladb/" target="_blank">
+                <span class="icon-facebook"></span></a>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <div class="footer-info">
+            <div class="footer-copyright">
+                &#169; 2021, ScyllaDB. All rights reserved.
+            </div>
+            <div class="footer-last-updated">
+                Last updated on 20 July 2021.
+            </div>
+            <div class="footer-version">
+                Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+                &amp; <a href="https://sphinx-theme.scylladb.com">ScyllaDB Theme 0.1.25</a>
+            </div>
+        </div>
+        <div class="footer-links">
+        </div>
+    </div>
+</footer>
+<!-- end footer.html -->
+
+<!-- bodyscripts.html -->
+<!-- at the end of the BODY --> 
+<script src="../_static/js/vendor/jquery.js"></script>
+<script src="../_static/js/vendor/jquery.cookie.min.js"></script>
+<script src="../_static/expertrec.js"></script>
+<script src="../_static/js/foundation/foundation.js"></script>
+<script src="../_static/js/foundation/foundation.topbar.js"></script>
+<script src="../_static/js/foundation/foundation.dropdown.js"></script>
+<script src="../_static/app.js"></script>
+<script>
+    $(document).foundation();
+</script>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T8P2JP"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+  <!-- end bodyscripts.html -->
+</body>
+</html>
